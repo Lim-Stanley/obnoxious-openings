@@ -26,17 +26,17 @@ import './index.css';
 /////////////////////////////////////////////////////////////
 //////////       TO DO LIST   ///////////////////////////////
 /////////////////////////////////////////////////////////////
-// Make enpassant possible if you just got to the point in history where it is about to be played
+// Make enpassant possible if you just got to the point in history where it is about to be played 
+//     (easy, just make canEnpassant an array)
 // Implement calculateWinner
-// Implement a 
 // Implement checks
 // Implement no castling out of checks
 // Implement no castling through a square that is being controlled by opponent
-// Implement a isControlled function that, given a coordinate, will tell if any opponent piece is controllling it
 // Implement limiting king moves to not suicide itself
-// Make black pawn and white pawn processing one function
 // Implement a board switch (play from black side)
 // Implement drag and drop
+// BUG: have a piece selected, go back in history to the other color's turn, and that piece turns into the other color's piece when
+//    you move it
 
 
 function Square(props) {
@@ -375,8 +375,7 @@ class Game extends React.Component {
       this.setState({whiteKingLocation: i})
     else if (pieceCode === "BK")
       this.setState({blackKingLocation: i})
-    else
-      squares[i] = pieceCode;
+    squares[i] = pieceCode;
     squares[this.state.pieceLocation] = "empty";
 
     // If en passant just happened, clear out the other pawn too
@@ -507,7 +506,6 @@ class Game extends React.Component {
 
   firstHandleClick(i)
   {
-
     const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
@@ -582,7 +580,8 @@ class Game extends React.Component {
   jumpTo(step) {
     this.setState({
       stepNumber: step,
-      whiteIsMoving: (step % 2) === 0
+      whiteIsMoving: (step % 2) === 0,
+      clickNumber: 1
     });
   }
 
@@ -1262,17 +1261,36 @@ class Game extends React.Component {
   ///////////////////////////////////////////////////////////////////////////////////////
 
   // return true or false
-// if a winner is found, return in winner Color
-  calculateWinner(squares, winnerColor, movingColor) {
-  // if moving color is black, check if white won
-  // if moving color is white, check if black won
-  // already given that moving color is in check
-
+  calculateWinner(squares, movingColor) {
+  // Calculates if opponent won
+  
+  let ownColor = ""
+  let opponentColor = ""
   // Get a list of all squares the king can move to
-  // For each square, check if its own piece is there OR if it is controlled by an opponent piece
+  let moveList = []
+  if (movingColor)
+  {
+    moveList = moveList.concat(this.KcontrolList(this.state.whiteKingLocation))
+    ownColor = "White"
+    opponentColor = "Black"
+  }
+  else
+  {
+    moveList = moveList.concat(this.KcontrolList(this.state.blackKingLocation))
+    ownColor = "Black"
+    opponentColor = "White"
+  }
+
+  // For each square, check if it's own piece is there OR if it is controlled by an opponent piece
   //   if it is, remove it from the list, because the king cannot move there
   // If the list is not empty, return false, because the king can move and therefore there is no winner
-  // If the list is empty at the end, then the king cannot move
+  for (let i = 0; i < moveList.length; i++)
+  {
+    if (squares[moveList[i]][0] === ownColor[0] || this.isControlledBy(opponentColor, moveList[i], squares))
+      moveList.splice(i, 1)
+  }
+  if (moveList.length != 0)
+    return false;
 
   // So, check for blocks and captures
   // problem: How do i get information about who checked the king?
@@ -1324,18 +1342,15 @@ class Game extends React.Component {
         }
       }
     });
-
     let winner = false
     let winnerColor = ""
-    console.log("calculating winner right here")
     if (inCheck.at(-1))
-      winner = this.calculateWinner(current.squares, winnerColor)
+      winner = this.calculateWinner(current.squares, this.state.whiteIsMoving)
     let status;
     if (winner) {
       status = "Winner: " + winnerColor;
     } else {
       status = (this.state.whiteIsMoving ? "White" : "Black") + " to move.";
-      console.log(inCheck.at(-1) + " is the incheck status")
       if (inCheck.at(-1))
         status = "Check! " + status
     }
