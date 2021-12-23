@@ -20,6 +20,8 @@ import './index.css';
 
 // GREEN COLOR: #769656
 // CREAM COLOR: #eeeed2
+// Yellow on light square: #f6f669
+// Yellow on dark square: #baca2b
 
 /////////////////////////////////////////////////////////////
 //////////       TO DO LIST   ///////////////////////////////
@@ -30,14 +32,27 @@ import './index.css';
 // Implement no castling through a square that is being controlled by opponent
 // Implement a isControlled function that, given a coordinate, will tell if any opponent piece is controllling it
 // Implement limiting king moves to not suicide itself
+// Make black pawn and white pawn processing one function
 // Implement a board switch (play from black side)
-// Implement a history with both white and black moves on same move (eg. 1. e4 e5)
-// Implement first click turns square yellow
+// Implement drag and drop
 
 
 function Square(props) {
   if (isLightSquare(props.squareNumber))
   {
+    if (props.selectedSquare != null && props.selectedSquare === props.squareNumber)
+    return (
+      <Button onClick={props.onClick} style={{
+        backgroundColor: "#f6f669",
+        alignItems: 'center',
+        borderRadius: 0,
+        width: '80px', 
+        height: '80px'
+      }}>
+        {pieceImage(props.pieceCode)}
+      </Button>
+    );
+
     return (
       <Button onClick={props.onClick} style={{
         backgroundColor: "#eeeed2",
@@ -52,6 +67,19 @@ function Square(props) {
   }
   else
   {
+    if (props.selectedSquare != null && props.selectedSquare === props.squareNumber)
+    return (
+      <Button onClick={props.onClick} style={{
+        backgroundColor: "#baca2b",
+        alignItems: 'center',
+        borderRadius: 0,
+        width: '80px', 
+        height: '80px'
+      }}>
+        {pieceImage(props.pieceCode)}
+      </Button>
+    );
+
     return (
       <Button onClick={props.onClick} style={{
         backgroundColor: "#769656",
@@ -144,6 +172,7 @@ class Board extends React.Component {
         pieceCode={this.props.squares[i]}
         onClick={() => this.props.onClick(i)}
         squareNumber={i}
+        selectedSquare= {this.props.selectedSquare}
       />
     );
   }
@@ -291,6 +320,16 @@ class Game extends React.Component {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
+
+    let moveLabel = ""
+    // Make moveHistory label (e4, Bh5, etc..)
+    if (pieceCode == "WP" || pieceCode == "BP")
+      moveLabel = this.colOf(i) + this.rowOf(i)
+    else if (squares[i] != "empty")
+      moveLabel = pieceCode[1] + "x" + this.colOf(i) + this.rowOf(i)
+    else
+      moveLabel = pieceCode[1] + this.colOf(i) + this.rowOf(i)
+
     // Handling castling
     if (pieceCode === "oo")
     {
@@ -336,9 +375,6 @@ class Game extends React.Component {
         squares[i - 8] = "empty"
     }
 
-    // Make moveHistory label (e4, Bh5, etc..)
-
-
     let pLocation = this.state.pieceLocation
     this.setState({
       history: history.concat([
@@ -346,7 +382,7 @@ class Game extends React.Component {
           squares: squares,
         }
       ]),
-      moveHistory: moveHistory.concat([this.state.movingPiece]),
+      moveHistory: moveHistory.concat([moveLabel]),
       stepNumber: history.length,
       whiteIsMoving: !this.state.whiteIsMoving,
       clickNumber: 1,
@@ -363,6 +399,11 @@ class Game extends React.Component {
     return;
   }
 
+  // Given a side and a square i, tells if that side controls square i
+  isControlledBy(side, i)
+  {
+
+  }
 
   // Implement possible moves for white
   handleClick(i) {
@@ -1412,11 +1453,16 @@ class Game extends React.Component {
         {
           moveNum = moveNum + ". "
           desc = moveNum + desc
-          return (<button onClick={() => this.jumpTo(move)}>{desc}</button>)
+          if (typeof moveHistory[move + 1] != "string")
+            return <div><button onClick={() => this.jumpTo(move)}>{desc}</button></div>
         }
         else
         {
-          return (<button onClick={() => this.jumpTo(move)}>{desc}</button>)
+          moveNum = moveNum + ". "
+          let desc1 = moveNum + moveHistory[move-1]
+          return (<div><button onClick={() => this.jumpTo(move - 1)}>{desc1}</button>
+          <button onClick={() => this.jumpTo(move)}>{desc}</button>
+          </div>)
         }
       }
     });
@@ -1427,12 +1473,12 @@ class Game extends React.Component {
     } else {
       status = (this.state.whiteIsMoving ? "White" : "Black") + " to move.";
     }
-
     return (
       <div className="game">
         <div className="game-board">
           <Board squares={current.squares}
             onClick={i => this.handleClick(i)}
+            selectedSquare= {this.state.pieceLocation}
           />
         </div>
         <div className="game-info">
