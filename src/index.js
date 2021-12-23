@@ -27,6 +27,8 @@ import './index.css';
 //////////       TO DO LIST   ///////////////////////////////
 /////////////////////////////////////////////////////////////
 // Make enpassant possible if you just got to the point in history where it is about to be played
+// Implement calculateWinner
+// Implement a 
 // Implement checks
 // Implement no castling out of checks
 // Implement no castling through a square that is being controlled by opponent
@@ -282,6 +284,9 @@ class Game extends React.Component {
       movingPiece: null,
       pieceLocation: null,
       canEnPassant: false,
+      inCheck: false,
+      blackKingLocation: 4,
+      whiteKingLocation: 60
     };
   }
 
@@ -338,12 +343,14 @@ class Game extends React.Component {
         squares[6] = "BK"
         squares[5] = "BR"
         squares[7] = "empty"
+        this.setState({blackKingLocation: 6})
       }
       else if (i === 62)
       {
         squares[61] = "WR"
         squares[62] = "WK"
         squares[63] = "empty"
+        this.setState({whiteKingLocation: 62})
       }
     }
     else if (pieceCode === "ooo")
@@ -353,14 +360,20 @@ class Game extends React.Component {
         squares[0] = "empty"
         squares[2] = "BK"
         squares[3] = "BR"
+        this.setState({blackKingLocation: 2})
       }
-      else if (i === 62)
+      else if (i === 58)
       {
         squares[56] = "empty"
         squares[58] = "WK"
         squares[59] = "WR"
+        this.setState({whiteKingLocation: 58})
       }
     }
+    else if (pieceCode === "WK")
+      this.setState({whiteKingLocation: i})
+    else if (pieceCode === "BK")
+      this.setState({blackKingLocation: i})
     else
       squares[i] = pieceCode;
     squares[this.state.pieceLocation] = "empty";
@@ -388,8 +401,26 @@ class Game extends React.Component {
       clickNumber: 1,
       movingPiece: null,
       pieceLocation: null,
-      canEnPassant: false
+      canEnPassant: false,
     });
+
+    // Check if in check
+    if (this.state.whiteIsMoving)
+    {
+      if (this.isControlledBy("White", this.state.blackKingLocation, squares))
+      {
+        this.setState({inCheck: true})
+        console.log("Black is in Check")
+      }
+    }
+    else
+    {
+      if (this.isControlledBy("Black", this.state.whiteKingLocation, squares))
+      {
+        this.setState({inCheck: true})
+        console.log("White is in Check")
+      }
+    }
 
     // Checking if en passant is possible
     if ((pieceCode === "WP" || pieceCode === "BP") && 
@@ -399,10 +430,44 @@ class Game extends React.Component {
     return;
   }
 
-  // Given a side and a square i, tells if that side controls square i
-  isControlledBy(side, i)
+  // Given a side (white/black) and a square i, tells if that side controls square i
+  isControlledBy(side, i, squares)
   {
-
+    let color = side[0]
+    let controlList = []
+    // For every piece on the board, if it is on the side, calculate the squares it controls
+    for (let n = 0; n < 64; n++)
+    {
+      if (squares[n][0] !== color)
+        continue;
+      // Now, we know squares[n] is of the specified color
+      switch(squares[n][1]){
+        case 'P':
+          controlList = controlList.concat(this.PcontrolList(n, this.state.whiteIsMoving))
+          break;
+        case 'R':
+          controlList = controlList.concat(this.RcontrolList(n, this.state.whiteIsMoving, squares))
+          break;
+        case 'B':
+          controlList = controlList.concat(this.BcontrolList(n, this.state.whiteIsMoving, squares))
+          break;
+        case 'Q':
+          controlList = controlList.concat(this.QcontrolList(n, this.state.whiteIsMoving, squares))
+          break;
+        case 'K':
+          controlList = controlList.concat(this.KcontrolList(n))
+          break;
+        case 'N':
+          controlList = controlList.concat(this.NcontrolList(n))
+          break;
+      }
+    }
+    for (let n = 0; n < controlList.length; n++)
+    {
+      if (controlList[n] === i)
+        return true;
+    }
+    return false;
   }
 
   // Implement possible moves for white
@@ -416,7 +481,6 @@ class Game extends React.Component {
     if (this.state.whiteIsMoving) {turn = "White"}
     else {turn = "Black"}
     console.log(i + " is the coordinate")
-    console.log("click number is " + this.state.clickNumber)
     // Handle if this is the first click
     if (this.state.clickNumber == 1)
     {
@@ -425,43 +489,32 @@ class Game extends React.Component {
         // If the first click is on an empty square, ignore it!
         return;
       }
-      // It's white's turn
-      else if (turn === "White")
-      {
-        this.firstWhiteHandleClick(i)
-        return;
-      }
       else 
       {
-        this.firstBlackHandleClick(i)
+        this.firstHandleClick(i)
         return;
       }
     }
     else
     {
-      if (turn === "White")
-      {
-        this.secondWhiteHandleClick(i)
-        return;
-      }
-      else 
-      {
-        this.secondBlackHandleClick(i)
-        return;
-      }
+      this.secondHandleClick(i)
+      return;
     }
   }
 
-  firstWhiteHandleClick(i)
+  firstHandleClick(i)
   {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
-    // If it's a black piece, return
-    if (this.isWhitePiece(squares[i]) === false)
-    {
+    // If the first piece doesn't match the turn, return
+    if (this.isWhitePiece(squares[i]) && this.state.whiteIsMoving === false)
       return;
-    }
+    else if (this.isWhitePiece(squares[i]) === false && this.state.whiteIsMoving)
+      return;
+    else if (this.state.inCheck && !((this.state.whiteIsMoving && i === this.state.whiteKingLocation) || 
+      (!this.state.whiteIsMoving && i === this.state.blackKingLocation)))
+      return;
     // If not, update the state so that it's on click 2
     else
     {
@@ -470,96 +523,41 @@ class Game extends React.Component {
         movingPiece: squares[i],
         pieceLocation: i
       })
-      console.log("Setting clickNumber to 2")
     }
     return;
   }
 
-  secondWhiteHandleClick(i)
+  secondHandleClick(i)
   {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
     // Note that i is the square that the user wishes to move the selected piece
 
-    // First, check if it is on a white piece
-    // If so, return because white pieces cannot move onto white pieces
-    // note that castling is going to be implemented like this
-    if (this.isWhitePiece(squares[i]) === true)
+    // First, check if it is on the same color piece. If so, return, because 
+    // pieces cannot move on their own pieces
+    if (this.isWhitePiece(squares[i]) && this.state.whiteIsMoving)
     {
       this.returnToFirstClick();
       return;
     }
-
-    // If not, call the appropriate WPmoveProcess, QmoveProcess, etc...
-    if (this.state.movingPiece === "WP")
-      this.WPmoveProcess(i)
-    else if (this.state.movingPiece === "WR")
-      this.RmoveProcess(i)
-    else if (this.state.movingPiece === "WN")
-      this.NmoveProcess(i)
-    else if (this.state.movingPiece === "WB")
-      this.BmoveProcess(i)
-    else if (this.state.movingPiece === "WQ")
-      this.QmoveProcess(i)
-    else if (this.state.movingPiece === "WK")
-      this.KmoveProcess(i)
-    return;
-  }
-
-  firstBlackHandleClick(i)
-  {
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
-    const squares = current.squares.slice();
-    // If it's a white piece, return
-    console.log("piece code is " + squares[i])
-    if (this.isWhitePiece(squares[i]))
+    else if (!this.isWhitePiece(squares[i]) && !this.state.whiteIsMoving && squares[i] != "empty")
     {
-      return;
-    }
-    // If not, update the state so that it's on click 2
-    else
-    {
-      this.setState({
-        clickNumber: 2,
-        movingPiece: squares[i],
-        pieceLocation: i
-      })
-      console.log("Setting clickNumber to 2")
-    }
-    return;
-  }
-
-  secondBlackHandleClick(i)
-  {
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
-    const squares = current.squares.slice();
-    // Note that i is the square that the user wishes to move the selected piece
-
-    // First, check if it is on a black piece
-    // If so, return because black pieces cannot move onto black pieces
-    // note that castling is going to be implemented like this
-    if (this.isWhitePiece(squares[i]) === false && squares[i] != "empty")
-    {
-      console.log("returning here")
       this.returnToFirstClick();
       return;
     }
-
-    // If not, call the appropriate BPmoveProcess, QmoveProcess, etc...
-    if (this.state.movingPiece === "BP")
-      this.BPmoveProcess(i)
-    else if (this.state.movingPiece === "BR")
+    // If not, call the appropriate PmoveProcess, QmoveProcess, etc...
+    if (this.state.movingPiece[1] === "P")
+      this.PmoveProcess(i)
+    else if (this.state.movingPiece[1] === "R")
       this.RmoveProcess(i)
-    else if (this.state.movingPiece === "BN")
+    else if (this.state.movingPiece[1] === "N")
       this.NmoveProcess(i)
-    else if (this.state.movingPiece === "BB")
+    else if (this.state.movingPiece[1] === "B")
       this.BmoveProcess(i)
-    else if (this.state.movingPiece === "BQ")
+    else if (this.state.movingPiece[1] === "Q")
       this.QmoveProcess(i)
-    else if (this.state.movingPiece === "BK")
+    else if (this.state.movingPiece[1] === "K")
       this.KmoveProcess(i)
     return;
   }
@@ -595,103 +593,8 @@ class Game extends React.Component {
     let movingColor = this.state.whiteIsMoving
     // movingColor is true if it is white, and false if it is black
     
-  
-    let moveList = []
-    // make a list of all possible rook moves at a given pieceLocation
-    // Going up
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation - (n*8) >= 64 || this.state.pieceLocation - (n*8) < 0 || 
-        this.colOf(this.state.pieceLocation - (n*8)) != this.colOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation - (n*8)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation - (n*8))
-        continue;
-      }
-      // if own piece
-      else if (this.isWhitePiece(squares[this.state.pieceLocation - (n*8)]) === movingColor)
-        break;
-      // if opponent piece
-      else
-      {
-        moveList.push(this.state.pieceLocation - (n*8))
-        break;
-      }
-    }
+    let moveList = this.RcontrolList(this.state.pieceLocation, movingColor, squares)
 
-    // Going down
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation + (n*8) >= 64 || this.state.pieceLocation + (n*8) < 0 ||
-        this.colOf(this.state.pieceLocation + (n*8)) != this.colOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation + (n*8)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation + (n*8))
-        continue;
-      }
-      // if own piece
-      else if (this.isWhitePiece(squares[this.state.pieceLocation + (n*8)]) === movingColor)
-        break;
-      // if opponent piece
-      else
-      {
-        moveList.push(this.state.pieceLocation + (n*8))
-        break;
-      }
-    }
-
-    // Going left
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation - (n) >= 64 || this.state.pieceLocation - (n) < 0 || 
-        this.rowOf(this.state.pieceLocation - n) != this.rowOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation - (n)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation - (n))
-        continue;
-      }
-      // if own piece
-      else if (this.isWhitePiece(squares[this.state.pieceLocation - (n)]) === movingColor)
-        break;
-      // if black piece
-      else
-      {
-        moveList.push(this.state.pieceLocation - (n))
-        break;
-      }
-    }
-    // Going right
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation + (n) >= 64 || this.state.pieceLocation + (n) < 0 || 
-        this.rowOf(this.state.pieceLocation + n) != this.rowOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation + (n)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation + (n))
-        continue;
-      }
-      // if white piece
-      else if (this.isWhitePiece(squares[this.state.pieceLocation + (n)]) === movingColor)
-        break;
-      // if black piece
-      else
-      {
-        moveList.push(this.state.pieceLocation + (n))
-        break;
-      }
-    }
     // now movelist is filled
     for (let n = 0; n < moveList.length; n++)
     {
@@ -708,43 +611,112 @@ class Game extends React.Component {
     return;
   }
 
+  // make a list of all possible rook moves at a given pieceLocation
+  RcontrolList(i, movingColor, squares)
+  {
+    let moveList = []
+    // Going up
+    for (let n = 1; n < 8; n++)
+    {
+      // If off the board, break
+      if (i - (n*8) >= 64 || i - (n*8) < 0 || 
+        this.colOf(i - (n*8)) != this.colOf(i))
+        break;
+      // If empty square
+      if (squares[i - (n*8)] == "empty")
+      {
+        moveList.push(i - (n*8))
+        continue;
+      }
+      // if own piece
+      else if (this.isWhitePiece(squares[i - (n*8)]) === movingColor)
+        break;
+      // if opponent piece
+      else
+      {
+        moveList.push(i - (n*8))
+        break;
+      }
+    }
+
+    // Going down
+    for (let n = 1; n < 8; n++)
+    {
+      // If off the board, break
+      if (i + (n*8) >= 64 || i + (n*8) < 0 ||
+        this.colOf(i + (n*8)) != this.colOf(i))
+        break;
+      // If empty square
+      if (squares[i + (n*8)] == "empty")
+      {
+        moveList.push(i + (n*8))
+        continue;
+      }
+      // if own piece
+      else if (this.isWhitePiece(squares[i + (n*8)]) === movingColor)
+        break;
+      // if opponent piece
+      else
+      {
+        moveList.push(i + (n*8))
+        break;
+      }
+    }
+
+    // Going left
+    for (let n = 1; n < 8; n++)
+    {
+      // If off the board, break
+      if (i - (n) >= 64 || i - (n) < 0 || 
+        this.rowOf(i - n) != this.rowOf(i))
+        break;
+      // If empty square
+      if (squares[i - (n)] == "empty")
+      {
+        moveList.push(i - (n))
+        continue;
+      }
+      // if own piece
+      else if (this.isWhitePiece(squares[i - (n)]) === movingColor)
+        break;
+      // if black piece
+      else
+      {
+        moveList.push(i - (n))
+        break;
+      }
+    }
+    // Going right
+    for (let n = 1; n < 8; n++)
+    {
+      // If off the board, break
+      if (i + (n) >= 64 || i + (n) < 0 || 
+        this.rowOf(i + n) != this.rowOf(i))
+        break;
+      // If empty square
+      if (squares[i + (n)] == "empty")
+      {
+        moveList.push(i + (n))
+        continue;
+      }
+      // if white piece
+      else if (this.isWhitePiece(squares[i + (n)]) === movingColor)
+        break;
+      // if black piece
+      else
+      {
+        moveList.push(i + (n))
+        break;
+      }
+    }
+    return moveList
+  }
+
   NmoveProcess(i)
   {
     // make a list of all possible knight moves at a given pieceLocation
-    let distanceList = [6, 10, 15, 17]
-    let moveList = []
-    for (let n = 0; n < 4; n++)
-    {
-      let coordinate = this.state.pieceLocation - distanceList[n]
-      if (coordinate < 64 && coordinate >= 0)
-      {
-        // Check if move is a valid move 
-        if (n < 2)
-        {
-          if (this.rowOf(coordinate) - 1 == this.rowOf(this.state.pieceLocation))
-            moveList.push(coordinate)
-        }
-        else
-        {
-          if (this.rowOf(coordinate) - 2 == this.rowOf(this.state.pieceLocation))
-            moveList.push(coordinate)
-        }
-      }
-      coordinate = distanceList[n] + this.state.pieceLocation
-      if (coordinate < 64 && coordinate >= 0)
-      {
-        if (n < 2)
-        {
-          if (this.rowOf(coordinate) + 1 == this.rowOf(this.state.pieceLocation))
-            moveList.push(coordinate)
-        }
-        else
-        {
-          if (this.rowOf(coordinate) + 2 == this.rowOf(this.state.pieceLocation))
-            moveList.push(coordinate)
-        }
-      }
-    }
+    let moveList = this.NcontrolList(this.state.pieceLocation)
+
     // now, have a moveList
     console.log(moveList)
     for (let n = 0; n < moveList.length; n++)
@@ -762,6 +734,45 @@ class Game extends React.Component {
     return;
   }
 
+  NcontrolList(i)
+  {
+    let distanceList = [6, 10, 15, 17]
+    let moveList = []
+    for (let n = 0; n < 4; n++)
+    {
+      let coordinate = i - distanceList[n]
+      if (coordinate < 64 && coordinate >= 0)
+      {
+        // Check if move is a valid move 
+        if (n < 2)
+        {
+          if (this.rowOf(coordinate) - 1 == this.rowOf(i))
+            moveList.push(coordinate)
+        }
+        else
+        {
+          if (this.rowOf(coordinate) - 2 == this.rowOf(i))
+            moveList.push(coordinate)
+        }
+      }
+      coordinate = distanceList[n] + i
+      if (coordinate < 64 && coordinate >= 0)
+      {
+        if (n < 2)
+        {
+          if (this.rowOf(coordinate) + 1 == this.rowOf(i))
+            moveList.push(coordinate)
+        }
+        else
+        {
+          if (this.rowOf(coordinate) + 2 == this.rowOf(i))
+            moveList.push(coordinate)
+        }
+      }
+    }
+    return moveList
+  }
+
   BmoveProcess(i)
   {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
@@ -771,102 +782,9 @@ class Game extends React.Component {
     let movingColor = this.state.whiteIsMoving
     // movingColor is true if it is white, and false if it is black
 
-    let moveList = []
+    let moveList = this.BcontrolList(this.state.pieceLocation, movingColor, squares)
     // make a list of all possible bishop moves at a given pieceLocation
-    // Going up-left
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation - (n*9) >= 64 || this.state.pieceLocation - (n*9) < 0 || 
-        this.backSlashDiagOf(this.state.pieceLocation - (n*9)) != this.backSlashDiagOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation - (n*9)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation - (n*9))
-        continue;
-      }
-      // if own color
-      else if (this.isWhitePiece(squares[this.state.pieceLocation - (n*9)]) === movingColor)
-        break;
-      // if opponent color
-      else
-      {
-        moveList.push(this.state.pieceLocation - (n*9))
-        break;
-      }
-    }
-
-    // Going down-right
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation + (n*9) >= 64 || this.state.pieceLocation + (n*9) < 0 || 
-        this.backSlashDiagOf(this.state.pieceLocation + (n*9)) != this.backSlashDiagOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation + (n*9)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation + (n*9))
-        continue;
-      }
-      // if own color
-      else if (this.isWhitePiece(squares[this.state.pieceLocation + (n*9)]) === movingColor)
-        break;
-      // if other color
-      else
-      {
-        moveList.push(this.state.pieceLocation + (n*9))
-        break;
-      }
-    }
-
-    // Going up-right
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation - (n*7) >= 64 || this.state.pieceLocation - (n*7) < 0 || 
-        this.forwardSlashDiagOf(this.state.pieceLocation - (n*7)) != this.forwardSlashDiagOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation - (n*7)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation - (n*7))
-        continue;
-      }
-      // if own color
-      else if (this.isWhitePiece(squares[this.state.pieceLocation - (n*7)]) === movingColor)
-        break;
-      // if empty color
-      else
-      {
-        moveList.push(this.state.pieceLocation - (n*7))
-        break;
-      }
-    }
-    // Going down-left
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation + (n*7) >= 64 || this.state.pieceLocation + (n*7) < 0 ||
-        this.forwardSlashDiagOf(this.state.pieceLocation + (n*7)) != this.forwardSlashDiagOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation + (n*7)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation + (n*7))
-        continue;
-      }
-      // if own color
-      else if (this.isWhitePiece(squares[this.state.pieceLocation + (n*7)]) === movingColor)
-        break;
-      // if opponent color
-      else
-      {
-        moveList.push(this.state.pieceLocation + (n*7))
-        break;
-      }
-    }
+    
     console.log(moveList)
     // now movelist is filled
     for (let n = 0; n < moveList.length; n++)
@@ -884,6 +802,106 @@ class Game extends React.Component {
     return;
   }
 
+  BcontrolList(i, movingColor, squares)
+  {
+    let moveList = []
+    // Going up-left
+    for (let n = 1; n < 8; n++)
+    {
+      // If off the board, break
+      if (i - (n*9) >= 64 || i - (n*9) < 0 || 
+        this.backSlashDiagOf(i - (n*9)) != this.backSlashDiagOf(i))
+        break;
+      // If empty square
+      if (squares[i - (n*9)] == "empty")
+      {
+        moveList.push(i - (n*9))
+        continue;
+      }
+      // if own color
+      else if (this.isWhitePiece(squares[i - (n*9)]) === movingColor)
+        break;
+      // if opponent color
+      else
+      {
+        moveList.push(i - (n*9))
+        break;
+      }
+    }
+
+    // Going down-right
+    for (let n = 1; n < 8; n++)
+    {
+      // If off the board, break
+      if (i + (n*9) >= 64 || i + (n*9) < 0 || 
+        this.backSlashDiagOf(i + (n*9)) != this.backSlashDiagOf(i))
+        break;
+      // If empty square
+      if (squares[i + (n*9)] == "empty")
+      {
+        moveList.push(i + (n*9))
+        continue;
+      }
+      // if own color
+      else if (this.isWhitePiece(squares[i + (n*9)]) === movingColor)
+        break;
+      // if other color
+      else
+      {
+        moveList.push(i + (n*9))
+        break;
+      }
+    }
+
+    // Going up-right
+    for (let n = 1; n < 8; n++)
+    {
+      // If off the board, break
+      if (i - (n*7) >= 64 || i - (n*7) < 0 || 
+        this.forwardSlashDiagOf(i - (n*7)) != this.forwardSlashDiagOf(i))
+        break;
+      // If empty square
+      if (squares[i - (n*7)] == "empty")
+      {
+        moveList.push(i - (n*7))
+        continue;
+      }
+      // if own color
+      else if (this.isWhitePiece(squares[i - (n*7)]) === movingColor)
+        break;
+      // if empty color
+      else
+      {
+        moveList.push(i - (n*7))
+        break;
+      }
+    }
+    // Going down-left
+    for (let n = 1; n < 8; n++)
+    {
+      // If off the board, break
+      if (i + (n*7) >= 64 || i + (n*7) < 0 ||
+        this.forwardSlashDiagOf(i + (n*7)) != this.forwardSlashDiagOf(i))
+        break;
+      // If empty square
+      if (squares[i + (n*7)] == "empty")
+      {
+        moveList.push(i + (n*7))
+        continue;
+      }
+      // if own color
+      else if (this.isWhitePiece(squares[i + (n*7)]) === movingColor)
+        break;
+      // if opponent color
+      else
+      {
+        moveList.push(i + (n*7))
+        break;
+      }
+    }
+    return moveList
+  }
+
   QmoveProcess(i)
   {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
@@ -893,196 +911,10 @@ class Game extends React.Component {
     let movingColor = this.state.whiteIsMoving
     // movingColor is true if it is white, and false if it is black
 
-    let moveList = []
+    let moveList = this.QcontrolList(this.state.pieceLocation, movingColor, squares)
     // make a list of all possible Queen moves at a given pieceLocation
-    // Going up-left
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation - (n*9) >= 64 || this.state.pieceLocation - (n*9) < 0 || 
-        this.backSlashDiagOf(this.state.pieceLocation - (n*9)) != this.backSlashDiagOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation - (n*9)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation - (n*9))
-        continue;
-      }
-      // if own color
-      else if (this.isWhitePiece(squares[this.state.pieceLocation - (n*9)]) === movingColor)
-        break;
-      // if opponent color
-      else
-      {
-        moveList.push(this.state.pieceLocation - (n*9))
-        break;
-      }
-    }
-
-    // Going down-right
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation + (n*9) >= 64 || this.state.pieceLocation + (n*9) < 0 || 
-        this.backSlashDiagOf(this.state.pieceLocation + (n*9)) != this.backSlashDiagOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation + (n*9)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation + (n*9))
-        continue;
-      }
-      // if own color
-      else if (this.isWhitePiece(squares[this.state.pieceLocation + (n*9)]) === movingColor)
-        break;
-      // if other color
-      else
-      {
-        moveList.push(this.state.pieceLocation + (n*9))
-        break;
-      }
-    }
-
-    // Going up-right
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation - (n*7) >= 64 || this.state.pieceLocation - (n*7) < 0 || 
-        this.forwardSlashDiagOf(this.state.pieceLocation - (n*7)) != this.forwardSlashDiagOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation - (n*7)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation - (n*7))
-        continue;
-      }
-      // if own color
-      else if (this.isWhitePiece(squares[this.state.pieceLocation - (n*7)]) === movingColor)
-        break;
-      // if empty color
-      else
-      {
-        moveList.push(this.state.pieceLocation - (n*7))
-        break;
-      }
-    }
-    // Going down-left
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation + (n*7) >= 64 || this.state.pieceLocation + (n*7) < 0 ||
-        this.forwardSlashDiagOf(this.state.pieceLocation + (n*7)) != this.forwardSlashDiagOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation + (n*7)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation + (n*7))
-        continue;
-      }
-      // if own color
-      else if (this.isWhitePiece(squares[this.state.pieceLocation + (n*7)]) === movingColor)
-        break;
-      // if opponent color
-      else
-      {
-        moveList.push(this.state.pieceLocation + (n*7))
-        break;
-      }
-    }
-    // Going up
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation - (n*8) >= 64 || this.state.pieceLocation - (n*8) < 0 || 
-        this.colOf(this.state.pieceLocation - (n*8)) != this.colOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation - (n*8)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation - (n*8))
-        continue;
-      }
-      // if own piece
-      else if (this.isWhitePiece(squares[this.state.pieceLocation - (n*8)]) === movingColor)
-        break;
-      // if opponent piece
-      else
-      {
-        moveList.push(this.state.pieceLocation - (n*8))
-        break;
-      }
-    }
-
-    // Going down
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation + (n*8) >= 64 || this.state.pieceLocation + (n*8) < 0 ||
-        this.colOf(this.state.pieceLocation + (n*8)) != this.colOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation + (n*8)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation + (n*8))
-        continue;
-      }
-      // if own piece
-      else if (this.isWhitePiece(squares[this.state.pieceLocation + (n*8)]) === movingColor)
-        break;
-      // if opponent piece
-      else
-      {
-        moveList.push(this.state.pieceLocation + (n*8))
-        break;
-      }
-    }
-
-    // Going left
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation - (n) >= 64 || this.state.pieceLocation - (n) < 0 || 
-        this.rowOf(this.state.pieceLocation - n) != this.rowOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation - (n)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation - (n))
-        continue;
-      }
-      // if own piece
-      else if (this.isWhitePiece(squares[this.state.pieceLocation - (n)]) === movingColor)
-        break;
-      // if black piece
-      else
-      {
-        moveList.push(this.state.pieceLocation - (n))
-        break;
-      }
-    }
-    // Going right
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (this.state.pieceLocation + (n) >= 64 || this.state.pieceLocation + (n) < 0 || 
-        this.rowOf(this.state.pieceLocation + n) != this.rowOf(this.state.pieceLocation))
-        break;
-      // If empty square
-      if (squares[this.state.pieceLocation + (n)] == "empty")
-      {
-        moveList.push(this.state.pieceLocation + (n))
-        continue;
-      }
-      // if white piece
-      else if (this.isWhitePiece(squares[this.state.pieceLocation + (n)]) === movingColor)
-        break;
-      // if black piece
-      else
-      {
-        moveList.push(this.state.pieceLocation + (n))
-        break;
-      }
-    }
+    console.log(moveList)
+    
     // now movelist is filled
     for (let n = 0; n < moveList.length; n++)
     {
@@ -1099,6 +931,14 @@ class Game extends React.Component {
     return;
   }
 
+  QcontrolList(i, movingColor, squares)
+  {
+    let tempList = []
+    tempList = tempList.concat(this.BcontrolList(i, movingColor, squares))
+    tempList = tempList.concat(this.RcontrolList(i, movingColor, squares))
+    return tempList
+  }
+
   KmoveProcess(i)
   {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
@@ -1108,19 +948,9 @@ class Game extends React.Component {
     let movingColor = this.state.whiteIsMoving
     // moving color tells what color king is moving
 
-    let possibleDistances = [1, 7, 8, 9]
-    let moveList = []
-    // make a list of all possible King moves at a given pieceLocation
-    for (let n = 0; n < 4; n++)
-    {
-      let coordinate = this.state.pieceLocation - possibleDistances[n]
-      if (coordinate >= 0 && coordinate < 64)
-        moveList.push(coordinate)
-      coordinate = this.state.pieceLocation + possibleDistances[n]
-      if (coordinate >= 0 && coordinate < 64)
-        moveList.push(coordinate)
-    }
-    
+    // Makes a list of possible moves
+    let moveList = this.KcontrolList(this.state.pieceLocation)
+    console.log(moveList)
     for (let n = 0; n < moveList.length; n++)
     {
       if (moveList[n] == i)
@@ -1174,11 +1004,31 @@ class Game extends React.Component {
     
   }
 
-  WPmoveProcess(i)
+  KcontrolList(i)
+  {
+    let possibleDistances = [1, 7, 8, 9]
+    let moveList =[]
+    for (let n = 0; n < 4; n++)
+    {
+      let coordinate = i - possibleDistances[n]
+      if (coordinate >= 0 && coordinate < 64)
+        moveList.push(coordinate)
+      coordinate = i + possibleDistances[n]
+      if (coordinate >= 0 && coordinate < 64)
+        moveList.push(coordinate)
+    }
+    return moveList
+  }
+
+  PmoveProcess(i)
   {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
+
+    let movingColor = this.state.whiteIsMoving
+    // moving color tells what color pawn is moving
+
     // make a list of all possible pawn moves at a given pieceLocation, including captures
     //    Then, check if the clicked is in moveList
     //     if not, return to click one
@@ -1188,26 +1038,45 @@ class Game extends React.Component {
     //   if there is, capture!
     //   if not, return to click one
     let moveList = []
-    if (this.state.pieceLocation < 56 && this.state.pieceLocation >= 48)
+    if (movingColor)
     {
-      for (let n = 1; n < 3; n++)
+      if (this.state.pieceLocation < 56 && this.state.pieceLocation >= 48)
       {
-        if (squares[this.state.pieceLocation - (n*8)] == "empty")
-          moveList.push(this.state.pieceLocation - (n*8))
-        else
-          break;
+        for (let n = 1; n < 3; n++)
+        {
+          if (squares[this.state.pieceLocation - (n*8)] == "empty")
+            moveList.push(this.state.pieceLocation - (n*8))
+          else
+            break;
+        }
+      }
+      else
+      {
+        if (squares[this.state.pieceLocation - 8] == "empty")
+          moveList.push(this.state.pieceLocation - 8)
       }
     }
     else
     {
-      if (squares[this.state.pieceLocation - 8] == "empty")
-        moveList.push(this.state.pieceLocation - 8)
+      if (this.state.pieceLocation < 16 && this.state.pieceLocation >= 8)
+      {
+        for (let n = 1; n < 3; n++)
+        {
+          if (squares[this.state.pieceLocation + (n*8)] == "empty")
+            moveList.push(this.state.pieceLocation + (n*8))
+          else
+            break;
+        }
+      }
+      else
+      {
+        if (squares[this.state.pieceLocation + 8] == "empty")
+          moveList.push(this.state.pieceLocation + 8)
+      }
     }
-    moveList.push(this.state.pieceLocation - 7)
-    moveList.push(this.state.pieceLocation - 9)
+    moveList = moveList.concat(this.PcontrolList(this.state.pieceLocation, movingColor))
     // Movelist is full of all possible moves, check if i is one of these
     let isValid = false
-    console.log("i is " + i)
     console.log(moveList)
     for (let n = 0; n < moveList.length; n++)
     {
@@ -1225,97 +1094,56 @@ class Game extends React.Component {
     }
 
     // if the click is a move, do the move!
-    if (i == (this.state.pieceLocation - 8) || i == (this.state.pieceLocation - 16))
+    if (movingColor)
     {
-      this.Update(i, "WP")
-      return;
+      if (i == (this.state.pieceLocation - 8) || i == (this.state.pieceLocation - 16))
+      {
+        this.Update(i, "WP")
+        return;
+      }
+    }
+    else
+    {
+      if (i == (this.state.pieceLocation + 8) || i == (this.state.pieceLocation + 16))
+      {
+        this.Update(i, "BP")
+        return;
+      }
     }
 
     // this means the click was a capture
-    if (squares[i] != "empty")
+    if (squares[i] != "empty" && movingColor)
     {
       this.Update(i, "WP")
     }
-    else if (this.state.canEnPassant) // check for en passant
+    else if (this.state.canEnPassant && movingColor) // check for en passant
     {
       if (i < 24 && i >= 16 && squares[i + 8] === "BP")
         this.Update(i, "WP")
+    }
+    else if (squares[i] != "empty" && movingColor === false)
+    {
+      this.Update(i, "BP")
+    }
+    else if (this.state.canEnPassant && movingColor === false)
+    {
+      if (i < 48 && i >= 40 && squares[i - 8] === "WP")
+        this.Update(i, "BP")
     }
     else // no piece to capture and no en passant
     {
       console.log("there is no piece to capture")
       this.returnToFirstClick()
-      return;
     }
+    return;
   }
 
-  BPmoveProcess(i)
+  PcontrolList(i, movingColor)
   {
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
-    const squares = current.squares.slice();
-    // make a list of all possible pawn moves at a given pieceLocation, including captures
-    //    Then, check if the clicked is in moveList
-    //     if not, return to click one
-    // if it is one of these, check if it is either 8 or 16
-    //   if it is, make the move!
-    //   if it is a capture, check if there is a black piece there
-    //   if there is, capture!
-    //   if not, return to click one
-    let moveList = []
-    if (this.state.pieceLocation < 16 && this.state.pieceLocation >= 8)
-    {
-      for (let n = 1; n < 3; n++)
-      {
-        if (squares[this.state.pieceLocation + (n*8)] == "empty")
-          moveList.push(this.state.pieceLocation + (n*8))
-        else
-          break;
-      }
-    }
+    if (movingColor)
+      return [i-7, i-9]
     else
-    {
-      if (squares[this.state.pieceLocation + 8] == "empty")
-        moveList.push(this.state.pieceLocation + 8)
-    }
-    moveList.push(this.state.pieceLocation + 7)
-    moveList.push(this.state.pieceLocation + 9)
-    // Movelist is full of all possible moves, check if i is one of these
-    let isValid = false
-    console.log(moveList)
-    for (let n = 0; n < moveList.length; n++)
-    {
-      if (moveList[n] === i)
-      {
-        isValid = true;
-        break;
-      }
-    }
-    // if the click is not a valid move, return!
-    if (isValid === false)
-    {
-      this.returnToFirstClick()
-      return;
-    }
-
-    // if the click is a move, do the move!
-    if (i == (this.state.pieceLocation + 8) || i == (this.state.pieceLocation + 16))
-    {
-      this.Update(i, "BP")
-      return;
-    }
-
-    // this means the click was a capture
-    if (squares[i] != "empty")
-    {
-      this.Update(i, "BP")
-    }
-    else
-    {
-      console.log("there is no piece to capture")
-      this.returnToFirstClick()
-      return;
-    }
+      return [i+7, i+9]
   }
 
   colOf(i)
@@ -1337,7 +1165,7 @@ class Game extends React.Component {
     else if (i % 8 == 7)
       return "h"
     else
-      console.log("invalid piece location")
+      console.log("invalid piece location " + i)
     return;
   }
   // Given a piece location, return the row it is in
@@ -1422,23 +1250,47 @@ class Game extends React.Component {
       movingPiece: null,
       pieceLocation: null
     })
-    console.log("Setting clickNumber to 1")
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////
   // End of move processsing ////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////
 
+  // return true or false
+// if a winner is found, return in winner Color
+  calculateWinner(squares, winnerColor, movingColor) {
+  // if moving color is black, check if white won
+  // if moving color is white, check if black won
+  // already given that moving color is in check
+
+  // Get a list of all squares the king can move to
+  // For each square, check if its own piece is there OR if it is controlled by an opponent piece
+  //   if it is, remove it from the list, because the king cannot move there
+  // If the list is not empty, return false, because the king can move and therefore there is no winner
+  // If the list is empty at the end, then the king cannot move
+
+  // So, check for blocks and captures
+  // problem: How do i get information about who checked the king?
+  //    Maybe change isControlledBy to also return a list of the pieces controlling that square?
+  // If isControlledBy returns a list of more than 1 element, then the opposite color of moving color won
+  // If not, see if the checking piece can be captured
+  //    If it can be captured, then return false, because movingColor still has a possible move
+  // Else, check if the checking piece is a bishop, rook, or queen
+  //    If so, check if the line of sight can be blocked 
+  //       Check if it is being checked on the same row, column, or diagonal
+  //         Then, run canBeBlocked(), a function that, given two piece locations, a color, and a row, column, or diagonal, 
+  //             determines if the color can block the check between the two pieces
+  //                Note that calculating pawn moves is where it can move, and not where it can capture when it is here
+  //       if canBeBlocked is false, return true, because the color won!
+}
+
   render() {
     const moveHistory = this.state.moveHistory;
     const history = this.state.history;
     const current = history[this.state.stepNumber];
-    const winner = calculateWinner(current.squares);
 
     const moves = history.map((step, move) => {
-      console.log("move is " + move)
       let desc = moveHistory[move]
-      console.log(moveHistory +" is moveHistory")
 
       // Figure out how to get every new turn to be on a new line
 
@@ -1467,11 +1319,18 @@ class Game extends React.Component {
       }
     });
 
+    let winner = false
+    let winnerColor = ""
+    console.log("calculating winner")
+    if (this.state.inCheck)
+      winner = this.calculateWinner(current.squares, winnerColor)
     let status;
     if (winner) {
-      status = "Winner: " + winner;
+      status = "Winner: " + winnerColor;
     } else {
       status = (this.state.whiteIsMoving ? "White" : "Black") + " to move.";
+      if (this.state.inCheck)
+        status = "Check! " + status
     }
     return (
       <div className="game">
@@ -1493,24 +1352,3 @@ class Game extends React.Component {
 // ========================================
 
 ReactDOM.render(<Game />, document.getElementById("root"));
-
-function calculateWinner(squares) {
-  const lines = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6]
-  ];
-  for (let i = 0; i < lines.length; i++) {
-    const [a, b, c] = lines[i];
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return squares[a];
-    }
-  }
-  return null;
-}
-
