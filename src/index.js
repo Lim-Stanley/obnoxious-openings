@@ -284,7 +284,7 @@ class Game extends React.Component {
       movingPiece: null,
       pieceLocation: null,
       canEnPassant: false,
-      inCheck: false,
+      inCheck: [false],
       blackKingLocation: 4,
       whiteKingLocation: 60
     };
@@ -321,6 +321,7 @@ class Game extends React.Component {
   }
 
   Update(i, pieceCode) {
+    const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
     const moveHistory = this.state.moveHistory.slice(0, this.state.stepNumber + 1);
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
@@ -388,6 +389,25 @@ class Game extends React.Component {
         squares[i - 8] = "empty"
     }
 
+    let inCheckBool = false;
+    // Check if in check
+    if (this.state.whiteIsMoving)
+    {
+      if (this.isControlledBy("White", this.state.blackKingLocation, squares))
+      {
+        inCheckBool = true;
+        console.log("Black is in Check")
+      }
+    }
+    else
+    {
+      if (this.isControlledBy("Black", this.state.whiteKingLocation, squares))
+      {
+        inCheckBool = true;
+        console.log("White is in Check")
+      }
+    }
+
     let pLocation = this.state.pieceLocation
     this.setState({
       history: history.concat([
@@ -396,6 +416,7 @@ class Game extends React.Component {
         }
       ]),
       moveHistory: moveHistory.concat([moveLabel]),
+      inCheck: inCheck.concat([inCheckBool]),
       stepNumber: history.length,
       whiteIsMoving: !this.state.whiteIsMoving,
       clickNumber: 1,
@@ -403,24 +424,6 @@ class Game extends React.Component {
       pieceLocation: null,
       canEnPassant: false,
     });
-
-    // Check if in check
-    if (this.state.whiteIsMoving)
-    {
-      if (this.isControlledBy("White", this.state.blackKingLocation, squares))
-      {
-        this.setState({inCheck: true})
-        console.log("Black is in Check")
-      }
-    }
-    else
-    {
-      if (this.isControlledBy("Black", this.state.whiteKingLocation, squares))
-      {
-        this.setState({inCheck: true})
-        console.log("White is in Check")
-      }
-    }
 
     // Checking if en passant is possible
     if ((pieceCode === "WP" || pieceCode === "BP") && 
@@ -504,6 +507,8 @@ class Game extends React.Component {
 
   firstHandleClick(i)
   {
+
+    const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
@@ -512,7 +517,7 @@ class Game extends React.Component {
       return;
     else if (this.isWhitePiece(squares[i]) === false && this.state.whiteIsMoving)
       return;
-    else if (this.state.inCheck && !((this.state.whiteIsMoving && i === this.state.whiteKingLocation) || 
+    else if (inCheck.at(-1) && !((this.state.whiteIsMoving && i === this.state.whiteKingLocation) || 
       (!this.state.whiteIsMoving && i === this.state.blackKingLocation)))
       return;
     // If not, update the state so that it's on click 2
@@ -1285,6 +1290,7 @@ class Game extends React.Component {
 }
 
   render() {
+    const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
     const moveHistory = this.state.moveHistory;
     const history = this.state.history;
     const current = history[this.state.stepNumber];
@@ -1321,15 +1327,16 @@ class Game extends React.Component {
 
     let winner = false
     let winnerColor = ""
-    console.log("calculating winner")
-    if (this.state.inCheck)
+    console.log("calculating winner right here")
+    if (inCheck.at(-1))
       winner = this.calculateWinner(current.squares, winnerColor)
     let status;
     if (winner) {
       status = "Winner: " + winnerColor;
     } else {
       status = (this.state.whiteIsMoving ? "White" : "Black") + " to move.";
-      if (this.state.inCheck)
+      console.log(inCheck.at(-1) + " is the incheck status")
+      if (inCheck.at(-1))
         status = "Check! " + status
     }
     return (
