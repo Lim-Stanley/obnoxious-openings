@@ -29,6 +29,7 @@ import './index.css';
 // Make enpassant possible if you just got to the point in history where it is about to be played 
 //     (easy, just make canEnpassant an array)
 // Implement calculateWinner
+// Implement pawn promotion
 // Implement checks
 // Implement no castling out of checks
 // Implement no castling through a square that is being controlled by opponent
@@ -304,11 +305,12 @@ class Game extends React.Component {
     {
       tempArray[i] = "BP";
     }
-    
+
     for (let i = 48; i < 56; i++)
     {
       tempArray[i] = "WP";
     }
+
     tempArray[56] = "WR"
     tempArray[57] = "WN"
     tempArray[58] = "WB"
@@ -339,6 +341,7 @@ class Game extends React.Component {
     // Handling castling
     if (pieceCode === "oo")
     {
+      moveLabel = "O-O"
       if (i === 6)
       {
         squares[6] = "BK"
@@ -348,6 +351,7 @@ class Game extends React.Component {
       }
       else if (i === 62)
       {
+        console.log("i'm in here")
         squares[61] = "WR"
         squares[62] = "WK"
         squares[63] = "empty"
@@ -356,6 +360,7 @@ class Game extends React.Component {
     }
     else if (pieceCode === "ooo")
     {
+      moveLabel = "O-O-O"
       if (i === 2)
       {
         squares[0] = "empty"
@@ -372,10 +377,17 @@ class Game extends React.Component {
       }
     }
     else if (pieceCode === "WK")
+    {
       this.setState({whiteKingLocation: i})
+      squares[i] = pieceCode;
+    }
     else if (pieceCode === "BK")
+    {
       this.setState({blackKingLocation: i})
-    squares[i] = pieceCode;
+      squares[i] = pieceCode;
+    }
+    else
+      squares[i] = pieceCode;
     squares[this.state.pieceLocation] = "empty";
 
     // If en passant just happened, clear out the other pawn too
@@ -392,7 +404,7 @@ class Game extends React.Component {
     // Check if in check
     if (this.state.whiteIsMoving)
     {
-      if (this.isControlledBy("White", this.state.blackKingLocation, squares))
+      if (this.controlledBy("White", this.state.blackKingLocation, squares).length !== 0)
       {
         inCheckBool = true;
         console.log("Black is in Check")
@@ -400,7 +412,7 @@ class Game extends React.Component {
     }
     else
     {
-      if (this.isControlledBy("Black", this.state.whiteKingLocation, squares))
+      if (this.controlledBy("Black", this.state.whiteKingLocation, squares).length !== 0)
       {
         inCheckBool = true;
         console.log("White is in Check")
@@ -433,28 +445,33 @@ class Game extends React.Component {
   }
 
   // Given a side (white/black) and a square i, tells if that side controls square i
-  isControlledBy(side, i, squares)
+  controlledBy(side, i, squares)
   {
     let color = side[0]
-    let controlList = []
+    let colorBool = false
+    if (color === "W")
+      colorBool = true
+    let controllingList = []
     // For every piece on the board, if it is on the side, calculate the squares it controls
     for (let n = 0; n < 64; n++)
     {
       if (squares[n][0] !== color)
         continue;
+      let controlList = []
+      // console.log("looking at square " + n)
       // Now, we know squares[n] is of the specified color
       switch(squares[n][1]){
         case 'P':
-          controlList = controlList.concat(this.PcontrolList(n, this.state.whiteIsMoving))
+          controlList = controlList.concat(this.PcontrolList(n, colorBool))
           break;
         case 'R':
-          controlList = controlList.concat(this.RcontrolList(n, this.state.whiteIsMoving, squares))
+          controlList = controlList.concat(this.RcontrolList(n, colorBool, squares))
           break;
         case 'B':
-          controlList = controlList.concat(this.BcontrolList(n, this.state.whiteIsMoving, squares))
+          controlList = controlList.concat(this.BcontrolList(n, colorBool, squares))
           break;
         case 'Q':
-          controlList = controlList.concat(this.QcontrolList(n, this.state.whiteIsMoving, squares))
+          controlList = controlList.concat(this.QcontrolList(n, colorBool, squares))
           break;
         case 'K':
           controlList = controlList.concat(this.KcontrolList(n))
@@ -463,13 +480,16 @@ class Game extends React.Component {
           controlList = controlList.concat(this.NcontrolList(n))
           break;
       }
+      for (let h = 0; h < controlList.length; h++)
+      {
+        if (controlList[h] === i)
+        {
+          controllingList.push(n)
+          break;
+        }
+      }
     }
-    for (let n = 0; n < controlList.length; n++)
-    {
-      if (controlList[n] === i)
-        return true;
-    }
-    return false;
+    return controllingList;
   }
 
   // Implement possible moves for white
@@ -478,6 +498,8 @@ class Game extends React.Component {
     const current = history[history.length - 1];
     const squares = current.squares.slice();
 
+    if (this.calculateWinner(current.squares, this.state.whiteIsMoving))
+      return;
     // Main thing!
     let turn = null;
     if (this.state.whiteIsMoving) {turn = "White"}
@@ -1150,6 +1172,209 @@ class Game extends React.Component {
       return [i+7, i+9]
   }
 
+  PmoveList(i, movingColor)
+  {
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);
+    const current = history[history.length - 1];
+    const squares = current.squares.slice();
+
+    let moveList = []
+    if (movingColor)
+    {
+      if (i < 56 && i >= 48)
+      {
+        for (let n = 1; n < 3; n++)
+        {
+          if (squares[i - (n*8)] == "empty")
+            moveList.push(i - (n*8))
+          else
+            break;
+        }
+      }
+      else
+      {
+        if (squares[i - 8] == "empty")
+          moveList.push(i - 8)
+      }
+    }
+    else
+    {
+      if (i < 16 && i >= 8)
+      {
+        for (let n = 1; n < 3; n++)
+        {
+          if (squares[i + (n*8)] == "empty")
+            moveList.push(i + (n*8))
+          else
+            break;
+        }
+      }
+      else
+      {
+        if (squares[i + 8] == "empty")
+          moveList.push(i + 8)
+      }
+    }
+    return moveList
+  }
+
+  //  A function that, given two piece locations, a color, and a row, column, or diagonal, 
+  //             determines if the color can block the check between the two pieces
+  // Color is string
+  canBeBlocked(location1, location2, color, direction)
+  {
+    // Determine all squares between the two pieces
+    // use Squarelist, a function that takes any given direction and returns a list of all squares in that direction in order
+    let squareList = this.makeSquareList(direction)
+    let index1 = -1
+    let index2 = -1
+    for (let i = 0; i < squareList.length; i++)
+    {
+      if (squareList[i] === location1)
+        index1 = i
+      if (squareList[i] === location2)
+        index2 = i
+    }
+    if (index1 < index2)
+      squareList = squareList.slice(index1 + 1, index2)
+    else
+      squareList = squareList.slice(index2 + 1, index1)
+    // With each square, run isBlockableSquare
+    for (let i = 0; i < squareList.length; i++)
+    {
+      if (this.isBlockableSquare(color, i))
+        return true;
+    }
+    return false;
+  }
+  
+  // side is a string "white" or "black", and i is the square
+  // Returns true or false
+  isBlockableSquare(side, i)
+  {
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);
+    const current = history[history.length - 1];
+    const squares = current.squares.slice();
+
+    let color = side[0]
+    // For every piece on the board, if it is on the side, calculate the squares it controls
+    for (let n = 0; n < 64; n++)
+    {
+      if (squares[n][0] !== color)
+        continue;
+      let controlList = []
+      // Now, we know squares[n] is of the specified color
+      switch(squares[n][1]){
+        case 'P':
+          controlList = controlList.concat(this.PmoveList(n, this.state.whiteIsMoving)) // NEED TO CHANGE
+          break;
+        case 'R':
+          controlList = controlList.concat(this.RcontrolList(n, this.state.whiteIsMoving, squares))
+          break;
+        case 'B':
+          controlList = controlList.concat(this.BcontrolList(n, this.state.whiteIsMoving, squares))
+          break;
+        case 'Q':
+          controlList = controlList.concat(this.QcontrolList(n, this.state.whiteIsMoving, squares))
+          break;
+        case 'N':
+          controlList = controlList.concat(this.NcontrolList(n))
+          break;
+      }
+      for (let n = 0; n < controlList.length; n++)
+      {
+        if (controlList[n] === i)
+        {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // a function that takes any given direction and returns a list of all squares in that direction in order
+  makeSquareList(direction)
+  {
+    switch(direction){
+      case "a":
+        return [0, 8, 16, 24, 32, 40, 48, 56]
+      case "b":
+        return [1, 9, 17, 25, 33, 41, 49, 57]
+      case "c":
+        return [2, 10, 18, 26, 34, 42, 50, 58]
+      case "d":
+        return [3, 11, 19, 27, 35, 43, 51, 59]
+      case "e":
+        return [4, 12, 20, 28, 36, 44, 52, 60]
+      case "f":
+        return [5, 13, 21, 29, 37, 45, 53, 61]
+      case "g":
+        return [6, 14, 22, 30, 38, 46, 54, 62]
+      case "h":
+        return [7, 15, 23, 31, 39, 47, 55, 63]
+      case "1":
+        return [56, 57, 58, 59, 60, 61, 62, 63]
+      case "2":
+        return [48, 49, 50, 51, 52, 53, 54, 55]
+      case "3":
+        return [40, 41, 42, 43, 44, 45, 46, 47]
+      case "4":
+        return [32, 33, 34, 35, 36, 37, 38, 39]
+      case "5":
+        return [24, 25, 26, 27, 28, 29, 30, 31]
+      case "6":
+        return [16, 17, 18, 19, 20, 21, 22, 23]
+      case "7":
+        return [8, 9, 10, 11, 12, 13, 14, 15]
+      case "8":
+        return [0, 1, 2, 3, 4, 5, 6, 7]
+      case "a6-c8":
+        return [2, 9, 16]
+      case "a5-d8":
+        return [3, 10, 17, 24]
+      case "a4-e8":
+        return [4, 11, 18, 25, 32]
+      case "a3-f8":
+        return [5, 12, 19, 26, 33, 40]
+      case "a2-g8":
+        return [6, 13, 20, 27, 34, 41, 48]
+      case "a1-h8":
+        return [7, 14, 21, 28, 35, 42, 49, 56]
+      case "b1-h7":
+        return [15, 22, 29, 36, 43, 50, 57]
+      case "c1-h6":
+        return [23, 30, 37, 44, 51, 58]
+      case "d1-h5":
+        return [31, 38, 45, 52, 59]
+      case "e1-h4":
+        return [39, 46, 53, 60]
+      case "f1-h3":
+        return [47, 54, 61]
+      case "f8-h6":
+        return [5, 14, 23]
+      case "e8-h5":
+        return [4, 13, 22, 31]
+      case "d8-h4":
+        return [3, 12, 21, 30, 39]
+      case "c8-h3":
+        return [2, 11, 20, 29, 38, 47]
+      case "b8-h2":
+        return [1, 10, 19, 28, 37, 46, 55]
+      case "a8-h1":
+        return [0, 9, 18, 27, 36, 45, 54, 63]
+      case "a7-g1":
+        return [8, 17, 26, 35, 44, 53, 62]
+      case "a6-f1":
+        return [16, 25, 34, 43, 52, 61]
+      case "a5-e1":
+        return [24, 33, 42, 51, 60]
+      case "a4-d1":
+        return [32, 41, 50, 59]
+      case "a3-c1":
+        return [40, 49, 58]
+    }
+  }
+
   colOf(i)
   {
     if (i % 8 == 0)
@@ -1219,31 +1444,31 @@ class Game extends React.Component {
     if (i == 6 || i == 15)
       return "g8-h7"
     if (i == 5 || i == 14 || i == 23)
-      return "a6-c8"
+      return "f8-h6"
     if (i == 4 || i == 13 || i == 22 || i == 31)
-      return "a5-d8"
+      return "e8-h5"
     if (i == 3 || i == 12 || i == 21 || i == 30 || i == 39)
-      return "a4-e8"
+      return "d8-h4"
     if (i == 2 || i == 11 || i == 20 || i == 29 || i == 38 || i == 47)
-      return "a3-f8"
+      return "c8-h3"
     if (i == 1 || i == 10 || i == 19 || i == 28 || i == 37 || i == 46 || i == 55)
-      return "a2-g8"
+      return "b8-h2"
     if (i == 0 || i == 9  || i == 18 || i == 27 || i == 36 || i == 45 || i == 54 || i == 63)
-      return "a1-h8"
+      return "a8-h1"
     if (i == 8 || i == 17 || i == 26 || i == 35 || i == 44 || i == 53 || i == 62)
-      return "b1-h7"
+      return "a7-g1"
     if (i == 16 || i == 25 || i == 34 || i == 43 || i == 52 || i == 61)
-      return "c1-h6"
+      return "a6-f1"
     if (i == 24 || i == 33 || i == 42 || i == 51 || i == 60)
-      return "d1-h5"
+      return "a5-e1"
     if (i == 32 || i == 41 || i == 50 || i == 59)
-      return "e1-h4"
+      return "a4-d1"
     if (i == 40 || i == 49 || i == 58)
-      return "f1-h3"
+      return "a3-c1"
     if (i == 48 || i == 57)
-      return "g1-h2"
+      return "a2-b1"
     if (i == 56)
-      return "h1"
+      return "a1"
   }
 
   // Returns to the first click from the second
@@ -1268,43 +1493,69 @@ class Game extends React.Component {
   let opponentColor = ""
   // Get a list of all squares the king can move to
   let moveList = []
+  let kingLocation = ""
   if (movingColor)
   {
+    kingLocation = this.state.whiteKingLocation
     moveList = moveList.concat(this.KcontrolList(this.state.whiteKingLocation))
     ownColor = "White"
     opponentColor = "Black"
   }
   else
   {
+    kingLocation = this.state.blackKingLocation
     moveList = moveList.concat(this.KcontrolList(this.state.blackKingLocation))
     ownColor = "Black"
     opponentColor = "White"
   }
-
   // For each square, check if it's own piece is there OR if it is controlled by an opponent piece
   //   if it is, remove it from the list, because the king cannot move there
   // If the list is not empty, return false, because the king can move and therefore there is no winner
-  for (let i = 0; i < moveList.length; i++)
+  for (let i = 0; i < moveList.length;)
   {
-    if (squares[moveList[i]][0] === ownColor[0] || this.isControlledBy(opponentColor, moveList[i], squares))
+    if (squares[moveList[i]][0] === ownColor[0] || this.controlledBy(opponentColor, moveList[i], squares).length !== 0)
+    {
       moveList.splice(i, 1)
+      continue;
+    }
+    i++
   }
   if (moveList.length != 0)
     return false;
-
   // So, check for blocks and captures
   // problem: How do i get information about who checked the king?
-  //    Maybe change isControlledBy to also return a list of the pieces controlling that square?
-  // If isControlledBy returns a list of more than 1 element, then the opposite color of moving color won
+  let controllingPieces = this.controlledBy(opponentColor, kingLocation, squares)
+  // If controlledBy returns a list of more than 1 element, then the opposite color of moving color won
+  if (controllingPieces.length > 1)
+    return true;
+
   // If not, see if the checking piece can be captured
   //    If it can be captured, then return false, because movingColor still has a possible move
-  // Else, check if the checking piece is a bishop, rook, or queen
-  //    If so, check if the line of sight can be blocked 
+  if (this.controlledBy(ownColor, controllingPieces[0], squares).length !== 0)
+    return false;
+
+  // Now, we know that the checking piece cannot be captured. If the checking piece is a pawn or knight, they win!
+  if (squares[controllingPieces[0]][1] === "N" || squares[controllingPieces[0]][1] === "P")
+    return true;
+
+  //    Check if the line of sight can be blocked 
   //       Check if it is being checked on the same row, column, or diagonal
+  let direction = ""
+  if (this.rowOf(controllingPieces[0]) === this.rowOf(kingLocation))
+    direction = this.rowOf(kingLocation)
+  else if (this.colOf(controllingPieces[0] === this.colOf(kingLocation)))
+    direction = this.colOf(kingLocation)
+  else if (this.forwardSlashDiagOf(controllingPieces[0]) === this.forwardSlashDiagOf(kingLocation))
+    direction = this.forwardSlashDiagOf(kingLocation)
+  else if (this.backSlashDiagOf(controllingPieces[0] === this.backSlashDiagOf(kingLocation)))
+    direction = this.backSlashDiagOf(kingLocation)    
   //         Then, run canBeBlocked(), a function that, given two piece locations, a color, and a row, column, or diagonal, 
   //             determines if the color can block the check between the two pieces
   //                Note that calculating pawn moves is where it can move, and not where it can capture when it is here
   //       if canBeBlocked is false, return true, because the color won!
+  if (this.canBeBlocked(kingLocation, controllingPieces[0], ownColor, direction))
+    return false
+  return true;
 }
 
   render() {
@@ -1348,6 +1599,10 @@ class Game extends React.Component {
       winner = this.calculateWinner(current.squares, this.state.whiteIsMoving)
     let status;
     if (winner) {
+      if (this.state.whiteIsMoving)
+        winnerColor = "Black"
+      else
+        winnerColor = "White"
       status = "Winner: " + winnerColor;
     } else {
       status = (this.state.whiteIsMoving ? "White" : "Black") + " to move.";
@@ -1363,7 +1618,7 @@ class Game extends React.Component {
           />
         </div>
         <div className="game-info">
-          <div>{status}</div>
+          <div className = "status">{status}</div>
           <div>{moves}</div>
         </div>
       </div>

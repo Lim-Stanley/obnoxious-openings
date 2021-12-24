@@ -1,6 +1,7 @@
 body {
     font: 14px "Century Gothic", Futura, sans-serif;
     margin: 20px;
+    background-color: #312e2b;
   }
   
   ol, ul {
@@ -14,6 +15,9 @@ body {
   }
   
   .status {
+    background-color: #272522;
+    color: #a7a79f;
+    text-align: center;
     margin-bottom: 10px;
   }
   
@@ -61,4 +65,5 @@ body {
   .game-info {
     margin-left: 20px;
   }
+
   
