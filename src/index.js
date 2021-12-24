@@ -28,9 +28,8 @@ import './index.css';
 /////////////////////////////////////////////////////////////
 // Make enpassant possible if you just got to the point in history where it is about to be played 
 //     (easy, just make canEnpassant an array)
-// Implement calculateWinner
 // Implement pawn promotion
-// Implement checks
+// Implement checks ***** HIGH PRIORITY
 // Implement no castling out of checks
 // Implement no castling through a square that is being controlled by opponent
 // Implement limiting king moves to not suicide itself
@@ -181,90 +180,181 @@ class Board extends React.Component {
   }
 
   render() {
-    return (
+    if (this.props.isBoardFlipped)
+    {
+      // To play from black's POV
+    return(
       <div>
-        <div className="board-row">
-            {this.renderSquare(0)}
-            {this.renderSquare(1)}
-            {this.renderSquare(2)}
-            {this.renderSquare(3)}
-            {this.renderSquare(4)}
-            {this.renderSquare(5)}
-            {this.renderSquare(6)}
-            {this.renderSquare(7)}
-          </div>
           <div className="board-row">
-            {this.renderSquare(8)}
-            {this.renderSquare(9)}
-            {this.renderSquare(10)}
-            {this.renderSquare(11)}
-            {this.renderSquare(12)}
-            {this.renderSquare(13)}
-            {this.renderSquare(14)}
-            {this.renderSquare(15)}
-          </div>
+              {this.renderSquare(63)}
+              {this.renderSquare(62)}
+              {this.renderSquare(61)}
+              {this.renderSquare(60)}
+              {this.renderSquare(59)}
+              {this.renderSquare(58)}
+              {this.renderSquare(57)}
+              {this.renderSquare(56)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(55)}
+              {this.renderSquare(54)}
+              {this.renderSquare(53)}
+              {this.renderSquare(52)}
+              {this.renderSquare(51)}
+              {this.renderSquare(50)}
+              {this.renderSquare(49)}
+              {this.renderSquare(48)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(47)}
+              {this.renderSquare(46)}
+              {this.renderSquare(45)}
+              {this.renderSquare(44)}
+              {this.renderSquare(43)}
+              {this.renderSquare(42)}
+              {this.renderSquare(41)}
+              {this.renderSquare(40)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(39)}
+              {this.renderSquare(38)}
+              {this.renderSquare(37)}
+              {this.renderSquare(36)}
+              {this.renderSquare(35)}
+              {this.renderSquare(34)}
+              {this.renderSquare(33)}
+              {this.renderSquare(32)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(31)}
+              {this.renderSquare(30)}
+              {this.renderSquare(29)}
+              {this.renderSquare(28)}
+              {this.renderSquare(27)}
+              {this.renderSquare(26)}
+              {this.renderSquare(25)}
+              {this.renderSquare(24)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(23)}
+              {this.renderSquare(22)}
+              {this.renderSquare(21)}
+              {this.renderSquare(20)}
+              {this.renderSquare(19)}
+              {this.renderSquare(18)}
+              {this.renderSquare(17)}
+              {this.renderSquare(16)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(15)}
+              {this.renderSquare(14)}
+              {this.renderSquare(13)}
+              {this.renderSquare(12)}
+              {this.renderSquare(11)}
+              {this.renderSquare(10)}
+              {this.renderSquare(9)}
+              {this.renderSquare(8)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(7)}
+              {this.renderSquare(6)}
+              {this.renderSquare(5)}
+              {this.renderSquare(4)}
+              {this.renderSquare(3)}
+              {this.renderSquare(2)}
+              {this.renderSquare(1)}
+              {this.renderSquare(0)}
+            </div>
+        </div>
+      )
+    }
+    else
+    {
+      return (
+        <div>
           <div className="board-row">
-            {this.renderSquare(16)}
-            {this.renderSquare(17)}
-            {this.renderSquare(18)}
-            {this.renderSquare(19)}
-            {this.renderSquare(20)}
-            {this.renderSquare(21)}
-            {this.renderSquare(22)}
-            {this.renderSquare(23)}
-          </div>
-          <div className="board-row">
-            {this.renderSquare(24)}
-            {this.renderSquare(25)}
-            {this.renderSquare(26)}
-            {this.renderSquare(27)}
-            {this.renderSquare(28)}
-            {this.renderSquare(29)}
-            {this.renderSquare(30)}
-            {this.renderSquare(31)}
-          </div>
-          <div className="board-row">
-            {this.renderSquare(32)}
-            {this.renderSquare(33)}
-            {this.renderSquare(34)}
-            {this.renderSquare(35)}
-            {this.renderSquare(36)}
-            {this.renderSquare(37)}
-            {this.renderSquare(38)}
-            {this.renderSquare(39)}
-          </div>
-          <div className="board-row">
-            {this.renderSquare(40)}
-            {this.renderSquare(41)}
-            {this.renderSquare(42)}
-            {this.renderSquare(43)}
-            {this.renderSquare(44)}
-            {this.renderSquare(45)}
-            {this.renderSquare(46)}
-            {this.renderSquare(47)}
-          </div>
-          <div className="board-row">
-            {this.renderSquare(48)}
-            {this.renderSquare(49)}
-            {this.renderSquare(50)}
-            {this.renderSquare(51)}
-            {this.renderSquare(52)}
-            {this.renderSquare(53)}
-            {this.renderSquare(54)}
-            {this.renderSquare(55)}
-          </div>
-          <div className="board-row">
-            {this.renderSquare(56)}
-            {this.renderSquare(57)}
-            {this.renderSquare(58)}
-            {this.renderSquare(59)}
-            {this.renderSquare(60)}
-            {this.renderSquare(61)}
-            {this.renderSquare(62)}
-            {this.renderSquare(63)}
-          </div>
-      </div>
-    );
+              {this.renderSquare(0)}
+              {this.renderSquare(1)}
+              {this.renderSquare(2)}
+              {this.renderSquare(3)}
+              {this.renderSquare(4)}
+              {this.renderSquare(5)}
+              {this.renderSquare(6)}
+              {this.renderSquare(7)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(8)}
+              {this.renderSquare(9)}
+              {this.renderSquare(10)}
+              {this.renderSquare(11)}
+              {this.renderSquare(12)}
+              {this.renderSquare(13)}
+              {this.renderSquare(14)}
+              {this.renderSquare(15)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(16)}
+              {this.renderSquare(17)}
+              {this.renderSquare(18)}
+              {this.renderSquare(19)}
+              {this.renderSquare(20)}
+              {this.renderSquare(21)}
+              {this.renderSquare(22)}
+              {this.renderSquare(23)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(24)}
+              {this.renderSquare(25)}
+              {this.renderSquare(26)}
+              {this.renderSquare(27)}
+              {this.renderSquare(28)}
+              {this.renderSquare(29)}
+              {this.renderSquare(30)}
+              {this.renderSquare(31)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(32)}
+              {this.renderSquare(33)}
+              {this.renderSquare(34)}
+              {this.renderSquare(35)}
+              {this.renderSquare(36)}
+              {this.renderSquare(37)}
+              {this.renderSquare(38)}
+              {this.renderSquare(39)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(40)}
+              {this.renderSquare(41)}
+              {this.renderSquare(42)}
+              {this.renderSquare(43)}
+              {this.renderSquare(44)}
+              {this.renderSquare(45)}
+              {this.renderSquare(46)}
+              {this.renderSquare(47)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(48)}
+              {this.renderSquare(49)}
+              {this.renderSquare(50)}
+              {this.renderSquare(51)}
+              {this.renderSquare(52)}
+              {this.renderSquare(53)}
+              {this.renderSquare(54)}
+              {this.renderSquare(55)}
+            </div>
+            <div className="board-row">
+              {this.renderSquare(56)}
+              {this.renderSquare(57)}
+              {this.renderSquare(58)}
+              {this.renderSquare(59)}
+              {this.renderSquare(60)}
+              {this.renderSquare(61)}
+              {this.renderSquare(62)}
+              {this.renderSquare(63)}
+            </div>
+        </div>
+      );
+    }
   }
 }
 
@@ -287,7 +377,8 @@ class Game extends React.Component {
       canEnPassant: false,
       inCheck: [false],
       blackKingLocation: 4,
-      whiteKingLocation: 60
+      whiteKingLocation: 60,
+      isBoardFlipped: false
     };
   }
 
@@ -1222,7 +1313,7 @@ class Game extends React.Component {
   //  A function that, given two piece locations, a color, and a row, column, or diagonal, 
   //             determines if the color can block the check between the two pieces
   // Color is string
-  canBeBlocked(location1, location2, color, direction)
+  beBlockedList(location1, location2, color, direction)
   {
     // Determine all squares between the two pieces
     // use Squarelist, a function that takes any given direction and returns a list of all squares in that direction in order
@@ -1240,13 +1331,18 @@ class Game extends React.Component {
       squareList = squareList.slice(index1 + 1, index2)
     else
       squareList = squareList.slice(index2 + 1, index1)
+    
     // With each square, run isBlockableSquare
-    for (let i = 0; i < squareList.length; i++)
+    for (let i = 0; i < squareList.length;)
     {
       if (this.isBlockableSquare(color, squareList[i]))
-        return true;
+      {
+        i++
+      }
+      else
+        squareList.splice(i, 1)
     }
-    return false;
+    return squareList;
   }
   
   // side is a string "white" or "black", and i is the square
@@ -1489,7 +1585,6 @@ class Game extends React.Component {
   // return true or false
   calculateWinner(squares, movingColor) {
   // Calculates if opponent won
-  
   let ownColor = ""
   let opponentColor = ""
   // Get a list of all squares the king can move to
@@ -1552,10 +1647,9 @@ class Game extends React.Component {
   else if (this.backSlashDiagOf(controllingPieces[0] === this.backSlashDiagOf(kingLocation)))
     direction = this.backSlashDiagOf(kingLocation) 
   //         Then, run canBeBlocked(), a function that, given two piece locations, a color, and a row, column, or diagonal, 
-  //             determines if the color can block the check between the two pieces
-  //                Note that calculating pawn moves is where it can move, and not where it can capture when it is here
-  //       if canBeBlocked is false, return true, because the color won!
-  if (this.canBeBlocked(kingLocation, controllingPieces[0], ownColor, direction))
+  //             returns a list of squares in which a piece can go to in order to block the check
+  //       if beBlockedList is empty, return true, because the color won!
+  if (this.beBlockedList(kingLocation, controllingPieces[0], ownColor, direction).length !== 0)
     return false
   return true;
 }
@@ -1611,16 +1705,22 @@ class Game extends React.Component {
       if (inCheck.at(-1))
         status = "Check! " + status
     }
+    
+    const flipBoard = <button className = "moves" onClick={() => this.setState({isBoardFlipped: !this.state.isBoardFlipped})}>
+      Flip Board</button>
+
     return (
       <div className="game">
         <div className="game-board">
           <Board squares={current.squares}
             onClick={i => this.handleClick(i)}
             selectedSquare= {this.state.pieceLocation}
+            isBoardFlipped = {this.state.isBoardFlipped}
           />
         </div>
         <div className="game-info">
           <div className = "status">{status}</div>
+          <div>{flipBoard}</div>
           <div>{moves}</div>
         </div>
       </div>
