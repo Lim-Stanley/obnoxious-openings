@@ -494,11 +494,12 @@ class Game extends React.Component {
 
   // Implement possible moves for white
   handleClick(i) {
+    const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
 
-    if (this.calculateWinner(current.squares, this.state.whiteIsMoving))
+    if (inCheck.at(-1) && this.calculateWinner(current.squares, this.state.whiteIsMoving))
       return;
     // Main thing!
     let turn = null;
@@ -1525,6 +1526,7 @@ class Game extends React.Component {
   // So, check for blocks and captures
   // problem: How do i get information about who checked the king?
   let controllingPieces = this.controlledBy(opponentColor, kingLocation, squares)
+  console.log("controllingPieces is " + controllingPieces)
   // If controlledBy returns a list of more than 1 element, then the opposite color of moving color won
   if (controllingPieces.length > 1)
     return true;
@@ -1571,7 +1573,7 @@ class Game extends React.Component {
 
       if (move === 0)
       {
-        return <div><button onClick={() => this.jumpTo(move)}>Go to game start</button></div>
+        return <div><button className = "moves" onClick={() => this.jumpTo(move)}>Go to game start</button></div>
       }
       else
       {
@@ -1581,14 +1583,14 @@ class Game extends React.Component {
           moveNum = moveNum + ". "
           desc = moveNum + desc
           if (typeof moveHistory[move + 1] != "string")
-            return <div><button onClick={() => this.jumpTo(move)}>{desc}</button></div>
+            return <div><button className = "moves" onClick={() => this.jumpTo(move)}>{desc}</button></div>
         }
         else
         {
           moveNum = moveNum + ". "
           let desc1 = moveNum + moveHistory[move-1]
-          return (<div><button onClick={() => this.jumpTo(move - 1)}>{desc1}</button>
-          <button onClick={() => this.jumpTo(move)}>{desc}</button>
+          return (<div><button className = "moves" onClick={() => this.jumpTo(move - 1)}>{desc1}</button>
+          <button className = "moves" onClick={() => this.jumpTo(move)}>{desc}</button>
           </div>)
         }
       }
