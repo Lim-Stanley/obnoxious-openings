@@ -1243,7 +1243,7 @@ class Game extends React.Component {
     // With each square, run isBlockableSquare
     for (let i = 0; i < squareList.length; i++)
     {
-      if (this.isBlockableSquare(color, i))
+      if (this.isBlockableSquare(color, squareList[i]))
         return true;
     }
     return false;
@@ -1545,12 +1545,12 @@ class Game extends React.Component {
   let direction = ""
   if (this.rowOf(controllingPieces[0]) === this.rowOf(kingLocation))
     direction = this.rowOf(kingLocation)
-  else if (this.colOf(controllingPieces[0] === this.colOf(kingLocation)))
+  else if (this.colOf(controllingPieces[0]) === this.colOf(kingLocation))
     direction = this.colOf(kingLocation)
   else if (this.forwardSlashDiagOf(controllingPieces[0]) === this.forwardSlashDiagOf(kingLocation))
     direction = this.forwardSlashDiagOf(kingLocation)
   else if (this.backSlashDiagOf(controllingPieces[0] === this.backSlashDiagOf(kingLocation)))
-    direction = this.backSlashDiagOf(kingLocation)    
+    direction = this.backSlashDiagOf(kingLocation) 
   //         Then, run canBeBlocked(), a function that, given two piece locations, a color, and a row, column, or diagonal, 
   //             determines if the color can block the check between the two pieces
   //                Note that calculating pawn moves is where it can move, and not where it can capture when it is here

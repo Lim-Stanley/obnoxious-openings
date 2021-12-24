@@ -15,9 +15,13 @@ body {
   }
   
   .status {
+    font-size: 12px;
     background-color: #272522;
     color: #a7a79f;
     text-align: center;
+    border: #767676;
+    border-width: thick;
+    border-style: ridge;
     margin-bottom: 10px;
   }
   
