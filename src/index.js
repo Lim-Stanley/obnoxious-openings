@@ -29,11 +29,7 @@ import './index.css';
 // Make enpassant possible if you just got to the point in history where it is about to be played 
 //     (easy, just make canEnpassant an array)
 // Implement pawn promotion 
-// Implement checks ***** HIGH PRIORITY
-// Implement no castling out of checks
 // Implement no castling through a square that is being controlled by opponent
-// getDirection()
-//    given two pieces, get the direction in which they share in common
 // Implement no moving into check (function movingIntoCheck)
 // Implement drag and drop
 
@@ -356,6 +352,33 @@ class Game extends React.Component {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
+
+    // Temporarily do the move to see if it puts your king in check, and if it does, don't allow it
+    let tempDelete = squares[i]
+    squares[i] = pieceCode
+    squares[this.state.pieceLocation] = "empty"
+    // If this move makes yourself checked, don't do it
+    if(this.state.whiteIsMoving)
+    {
+      if (this.controlledBy("Black", this.state.whiteKingLocation, squares).length !== 0){
+        this.returnToFirstClick()
+        return;
+      }
+    }
+    else{
+      if (this.controlledBy("White", this.state.blackKingLocation, squares).length !== 0){
+        this.returnToFirstClick()
+        return;
+      }
+    }
+    squares[i] = tempDelete
+    squares[this.state.pieceLocation] = pieceCode
+    if (pieceCode === "oo" || pieceCode === "ooo"){
+      if (this.state.whiteIsMoving)
+        squares[this.state.pieceLocation] = "WK"
+      else
+        squares[this.state.pieceLocation] = "BK"
+    }
 
     let moveLabel = ""
     // Make moveHistory label (e4, Bh5, etc..)
@@ -1114,20 +1137,6 @@ class Game extends React.Component {
     const current = history[history.length - 1];
     const squares = current.squares.slice();
 
-    let direction = ""
-    let checkingPiece = -1
-    if (inCheck.at(-1)){
-      if (this.state.whiteIsMoving){
-          // Double checks are accounted for, there must only be one checking piece
-          checkingPiece = this.controlledBy("Black", this.state.whiteKingLocation, squares)[0]
-          direction = this.getDirection(checkingPiece, this.state.whiteKingLocation)
-        }
-      else{
-        checkingPiece = this.controlledBy("White", this.state.blackKingLocation, squares)[0]
-        direction = this.getDirection(checkingPiece, this.state.blackKingLocation)
-      }
-    }
-
     let movingColor = this.state.whiteIsMoving
     // moving color tells what color king is moving
 
@@ -1137,20 +1146,25 @@ class Game extends React.Component {
     console.log(moveList)
     if (!isIn(i, moveList)) {this.returnToFirstClick(); return}
   
+    
     // If you can block OR capture the checking piece, make the move
     if (inCheck.at(-1)){
-      if (this.state.whiteIsMoving && (isIn(i, this.beBlockedList(checkingPiece, this.state.whiteKingLocation, "White", direction)) 
-        || i === checkingPiece)){
-          this.Update(i, "WK")
-          return
-        }
-      else if (!this.state.whiteIsMoving && (isIn(i, this.beBlockedList(checkingPiece, this.state.blackKingLocation, "Black", direction)) 
-        || i === checkingPiece))
+      let ownColor = "White"; let opponentColor = "Black"
+      if (!this.state.whiteIsMoving) {ownColor = "Black"; opponentColor = "White"}
+      for (let i = 0; i < moveList.length;)
+      {
+        if (squares[moveList[i]][0] === ownColor[0] || this.controlledBy(opponentColor, moveList[i], squares).length !== 0)
         {
-          this.Update(i, "BK")
-          return
+          moveList.splice(i, 1)
+          continue;
         }
-      else {this.returnToFirstClick(); return}
+        i++
+      }
+      if (!isIn(i, moveList))
+      {
+        this.returnToFirstClick();
+        return;
+      }
     }
 
     // Check for castling
@@ -1188,13 +1202,22 @@ class Game extends React.Component {
         }
       }
     }
-    if (this.state.whiteIsMoving)
+    if (this.state.whiteIsMoving){
+      if (this.controlledBy("Black", i, squares).length !== 0){
+        this.returnToFirstClick()
+        return;
+      }
       this.Update(i, "WK")
-    else
+    }
+    else{
+      if (this.controlledBy("White", i, squares).length !== 0){
+        this.returnToFirstClick()
+        return;
+      }
       this.Update(i, "BK")
+    }
     this.returnToFirstClick()
     return;
-
   }
 
   KcontrolList(i)
