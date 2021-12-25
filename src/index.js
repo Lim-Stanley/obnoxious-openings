@@ -1594,6 +1594,7 @@ class Game extends React.Component {
     ownColor = "Black"
     opponentColor = "White"
   }
+  squares[kingLocation] = "empty"
   // For each square, check if it's own piece is there OR if it is controlled by an opponent piece
   //   if it is, remove it from the list, because the king cannot move there
   // If the list is not empty, return false, because the king can move and therefore there is no winner
@@ -1606,6 +1607,8 @@ class Game extends React.Component {
     }
     i++
   }
+  squares[kingLocation] = ownColor[0] + "K"
+  console.log(moveList)
   if (moveList.length != 0)
     return false;
   // So, check for blocks and captures
@@ -1614,7 +1617,6 @@ class Game extends React.Component {
   // If controlledBy returns a list of more than 1 element, then the opposite color of moving color won
   if (controllingPieces.length > 1)
     return true;
-  
   
   // If not, see if the checking piece can be captured
   //    If it can be captured, then return false, because movingColor still has a possible move
