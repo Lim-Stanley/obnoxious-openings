@@ -58,15 +58,13 @@ function Square(props) {
 }
 
 // Checks if i is a light square
-function isLightSquare(i)
-{
+function isLightSquare(i){
   if (i % 16 < 8) {if (i % 2 === 0) {return true} else {return false}}
   else {if (i % 2 === 1) {return true} else {return false}}
 }
 
 // Given a piece code (BB, WW, etc...) return the image associated with that piece
-function pieceImage(pieceCode)
-{
+function pieceImage(pieceCode){
   if (pieceCode === "BR") {return <img src = {BR} alt = "Black Rook" />}
   else if (pieceCode === "BN") {return <img src = {BN} alt = "Black Knight" />}
   else if (pieceCode === "BB") {return <img src = {BB} alt = "Black Bishop" />}
@@ -213,24 +211,13 @@ class Game extends React.Component {
 
   initializeBoard(){
     let tempArray = Array(64).fill("empty");
-    tempArray[0] = "BR"
-    tempArray[1] = "BN"
-    tempArray[2] = "BB"
-    tempArray[3] = "BQ"
-    tempArray[4] = "BK"
-    tempArray[5] = "BB"
-    tempArray[6] = "BN"
-    tempArray[7] = "BR"
+    tempArray[0] = "BR"; tempArray[7] = "BR"; tempArray[56] = "WR"; tempArray[63] = "WR";
+    tempArray[1] = "BN"; tempArray[6] = "BN"; tempArray[57] = "WN"; tempArray[62] = "WN";
+    tempArray[2] = "BB"; tempArray[5] = "BB"; tempArray[58] = "WB"; tempArray[61] = "WB";
+    tempArray[3] = "BQ"; tempArray[59] = "WQ";
+    tempArray[4] = "BK"; tempArray[60] = "WK";
     for (let i = 8; i < 16; i++){tempArray[i] = "BP";}
     for (let i = 48; i < 56; i++){tempArray[i] = "WP";}
-    tempArray[56] = "WR"
-    tempArray[57] = "WN"
-    tempArray[58] = "WB"
-    tempArray[59] = "WQ"
-    tempArray[60] = "WK"
-    tempArray[61] = "WB"
-    tempArray[62] = "WN"
-    tempArray[63] = "WR"
     return tempArray;
   }
 
@@ -247,8 +234,7 @@ class Game extends React.Component {
     squares[i] = pieceCode
     squares[this.state.pieceLocation] = "empty"
     // If this move makes yourself checked, don't do it
-    if(this.state.whiteIsMoving)
-    {
+    if(this.state.whiteIsMoving){
       if (this.controlledBy("Black", this.state.whiteKingLocation, squares).length !== 0){
         this.returnToFirstClick()
         return;
@@ -271,8 +257,11 @@ class Game extends React.Component {
 
     let moveLabel = ""
     // Make moveHistory label (e4, Bh5, etc..)
-    if (pieceCode == "WP" || pieceCode == "BP")
+    if (pieceCode == "WP" || pieceCode == "BP"){
       moveLabel = this.colOf(i) + this.rowOf(i)
+      if (this.colOf(i) !== this.colOf(this.state.pieceLocation))
+        moveLabel = this.colOf(this.state.pieceLocation) + "x" + moveLabel
+    }
     else if (squares[i] != "empty")
       moveLabel = pieceCode[1] + "x" + this.colOf(i) + this.rowOf(i)
     else
