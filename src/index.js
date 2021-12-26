@@ -196,12 +196,12 @@ class Game extends React.Component {
         }
       ],
       moveHistory: ["empty"],
+      canEnPassant: [false],
       stepNumber: 0,
       whiteIsMoving: true,
       clickNumber: 1,
       movingPiece: null,
       pieceLocation: null,
-      canEnPassant: false,
       inCheck: [false],
       blackKingLocation: 4,
       whiteKingLocation: 60,
@@ -222,6 +222,7 @@ class Game extends React.Component {
   }
 
   Update(i, pieceCode) {
+    const canEnPassant = this.state.canEnPassant.slice(0, this.state.stepNumber + 1);
     const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
     const moveHistory = this.state.moveHistory.slice(0, this.state.stepNumber + 1);
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
@@ -268,50 +269,33 @@ class Game extends React.Component {
       moveLabel = pieceCode[1] + this.colOf(i) + this.rowOf(i)
 
     // Handling castling
-    if (pieceCode === "oo")
-    {
+    if (pieceCode === "oo"){
       moveLabel = "O-O"
-      if (i === 6)
-      {
-        squares[6] = "BK"
-        squares[5] = "BR"
-        squares[7] = "empty"
+      if (i === 6){
+        squares[6] = "BK"; squares[5] = "BR"; squares[7] = "empty"
         this.setState({blackKingLocation: 6})
       }
-      else if (i === 62)
-      {
-        console.log("i'm in here")
-        squares[61] = "WR"
-        squares[62] = "WK"
-        squares[63] = "empty"
+      else if (i === 62){
+        squares[61] = "WR"; squares[62] = "WK"; squares[63] = "empty"
         this.setState({whiteKingLocation: 62})
       }
     }
-    else if (pieceCode === "ooo")
-    {
+    else if (pieceCode === "ooo"){
       moveLabel = "O-O-O"
-      if (i === 2)
-      {
-        squares[0] = "empty"
-        squares[2] = "BK"
-        squares[3] = "BR"
+      if (i === 2){
+        squares[0] = "empty"; squares[2] = "BK"; squares[3] = "BR"
         this.setState({blackKingLocation: 2})
       }
-      else if (i === 58)
-      {
-        squares[56] = "empty"
-        squares[58] = "WK"
-        squares[59] = "WR"
+      else if (i === 58){
+        squares[56] = "empty"; squares[58] = "WK"; squares[59] = "WR"
         this.setState({whiteKingLocation: 58})
       }
     }
-    else if (pieceCode === "WK")
-    {
+    else if (pieceCode === "WK"){
       this.setState({whiteKingLocation: i})
       squares[i] = pieceCode;
     }
-    else if (pieceCode === "BK")
-    {
+    else if (pieceCode === "BK"){
       this.setState({blackKingLocation: i})
       squares[i] = pieceCode;
     }
@@ -320,9 +304,8 @@ class Game extends React.Component {
     squares[this.state.pieceLocation] = "empty";
 
     // If en passant just happened, clear out the other pawn too
-    if ((pieceCode === "WP" && (i<24 && i >=16) && (this.colOf(this.state.pieceLocation) != this.colOf(i)) && (this.state.canEnPassant)) ||
-        (pieceCode === "BP" && (i<48 && i >=40) && (this.colOf(this.state.pieceLocation) != this.colOf(i)) && (this.state.canEnPassant)))
-    {
+    if ((pieceCode === "WP" && (i<24 && i >=16) && (this.colOf(this.state.pieceLocation) != this.colOf(i)) && (canEnPassant.at(-1))) ||
+        (pieceCode === "BP" && (i<48 && i >=40) && (this.colOf(this.state.pieceLocation) != this.colOf(i)) && (canEnPassant.at(-1)))){
       if (this.state.whiteIsMoving)
         squares[i + 8] = "empty"
       else
@@ -331,8 +314,7 @@ class Game extends React.Component {
 
     let inCheckBool = false;
     // Check if in check
-    if (this.state.whiteIsMoving)
-    {
+    if (this.state.whiteIsMoving){
       if (this.controlledBy("White", this.state.blackKingLocation, squares).length !== 0){
         inCheckBool = true;
         console.log("Black is in Check")
@@ -346,6 +328,13 @@ class Game extends React.Component {
     }
 
     let pLocation = this.state.pieceLocation
+    let enPassantBool = false;
+    // Checking if en passant is possible
+    if ((pieceCode === "WP" || pieceCode === "BP") && 
+      ((pLocation < 56 && pLocation >=48) || (pLocation < 16 && pLocation >= 8)) &&
+      ((i<32 && i>=24) || (i <40 && i >= 32))) // If en passant happened
+      enPassantBool = true;
+
     this.setState({
       history: history.concat([
         {
@@ -354,33 +343,26 @@ class Game extends React.Component {
       ]),
       moveHistory: moveHistory.concat([moveLabel]),
       inCheck: inCheck.concat([inCheckBool]),
+      canEnPassant: canEnPassant.concat([enPassantBool]),
       stepNumber: history.length,
       whiteIsMoving: !this.state.whiteIsMoving,
       clickNumber: 1,
       movingPiece: null,
       pieceLocation: null,
-      canEnPassant: false,
     });
 
-    // Checking if en passant is possible
-    if ((pieceCode === "WP" || pieceCode === "BP") && 
-      ((pLocation < 56 && pLocation >=48) || (pLocation < 16 && pLocation >= 8)) &&
-      ((i<32 && i>=24) || (i <40 && i >= 32))) // If en passant happened
-      this.setState({canEnPassant: true})
     return;
   }
 
   // Given a side (white/black) and a square i, returns a list of all piece locations that control that square
-  controlledBy(side, i, squares)
-  {
+  controlledBy(side, i, squares){
     let color = side[0]
     let colorBool = false
     if (color === "W")
       colorBool = true
     let controllingList = []
     // For every piece on the board, if it is on the side, calculate the squares it controls
-    for (let n = 0; n < 64; n++)
-    {
+    for (let n = 0; n < 64; n++){
       if (squares[n][0] !== color)
         continue;
       let controlList = []
@@ -406,10 +388,8 @@ class Game extends React.Component {
           controlList = controlList.concat(this.NcontrolList(n))
           break;
       }
-      for (let h = 0; h < controlList.length; h++)
-      {
-        if (controlList[h] === i)
-        {
+      for (let h = 0; h < controlList.length; h++){
+        if (controlList[h] === i){
           controllingList.push(n)
           break;
         }
@@ -1118,6 +1098,7 @@ class Game extends React.Component {
 
   PmoveProcess(i)
   {
+    const canEnPassant = this.state.canEnPassant.slice(0, this.state.stepNumber + 1);
     const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
@@ -1211,7 +1192,7 @@ class Game extends React.Component {
           this.Update(i, "WP")
       this.returnToFirstClick()
     }
-    else if (this.state.canEnPassant && movingColor){
+    else if (canEnPassant.at(-1) && movingColor){
       // If in check, check to see if en passant can capture the checking piece OR block!
       // check for en passant
       if (inCheck.at(-1)){
@@ -1238,7 +1219,7 @@ class Game extends React.Component {
       this.returnToFirstClick()
       return;
     }
-    else if (this.state.canEnPassant && movingColor === false){
+    else if (canEnPassant.at(-1) && movingColor === false){
       if (inCheck.at(-1)){
         if ((isIn(i, this.beBlockedList(this.state.blackKingLocation, checkingPiece, "Black", direction)) ||
           (i - 8) === checkingPiece) && i < 48 && i >= 40 && squares[i - 8] === "WP"){
@@ -1556,38 +1537,38 @@ class Game extends React.Component {
       }
     });
 
-    if (this.state.renderPromotion) {
-      let pieceList = ["Q", "R", "N", "B"]
-      let bgColor = ""
-      let colorLetter = ""
-      if (isLightSquare(this.state.pieceLocation)){bgColor = "#f6f669"}
-      else {bgColor = "#eeeed2"}
-      if (this.state.whiteIsMoving) {colorLetter = "W"}
-      else {colorLetter = "B"}
+    // if (this.state.renderPromotion) {
+    //   let pieceList = ["Q", "R", "N", "B"]
+    //   let bgColor = ""
+    //   let colorLetter = ""
+    //   if (isLightSquare(this.state.pieceLocation)){bgColor = "#f6f669"}
+    //   else {bgColor = "#eeeed2"}
+    //   if (this.state.whiteIsMoving) {colorLetter = "W"}
+    //   else {colorLetter = "B"}
 
-      let returnList = [<Button style={{
-        backgroundColor: bgColor,
-        alignItems: 'center',
-        borderRadius: 0,
-        width: '80px', 
-        height: '80px'
-      }}>
-        {pieceImage(colorLetter + pieceList[0])}
-      </Button>]
+    //   let returnList = [<Button style={{
+    //     backgroundColor: bgColor,
+    //     alignItems: 'center',
+    //     borderRadius: 0,
+    //     width: '80px', 
+    //     height: '80px'
+    //   }}>
+    //     {pieceImage(colorLetter + pieceList[0])}
+    //   </Button>]
 
-      for (let n = 1; n < 4; n++){
-        returnList.push(<Button style={{
-          backgroundColor: bgColor,
-          alignItems: 'center',
-          borderRadius: 0,
-          width: '80px', 
-          height: '80px'
-        }}>
-          {pieceImage(colorLetter + pieceList[n])}
-        </Button>)
-      }
-      moves = returnList
-    }
+    //   for (let n = 1; n < 4; n++){
+    //     returnList.push(<Button style={{
+    //       backgroundColor: bgColor,
+    //       alignItems: 'center',
+    //       borderRadius: 0,
+    //       width: '80px', 
+    //       height: '80px'
+    //     }}>
+    //       {pieceImage(colorLetter + pieceList[n])}
+    //     </Button>)
+    //   }
+    //   moves = returnList
+    // }
 
     let winner = false
     let winnerColor = ""
@@ -1605,7 +1586,7 @@ class Game extends React.Component {
       if (inCheck.at(-1))
         status = "Check! " + status
     }
-    
+
     const flipBoard = <button className = "moves" onClick={() => this.setState({isBoardFlipped: !this.state.isBoardFlipped})}>
       Flip Board</button>
 
