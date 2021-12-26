@@ -96,72 +96,26 @@ function Square(props) {
 // Checks if i is a light square
 function isLightSquare(i)
 {
-  if (i === 0 ||
-    i === 2 ||
-    i === 4 ||
-    i === 6 ||
-    i === 9 ||
-    i === 11 ||
-    i === 13 ||
-    i === 15 ||
-    i === 16 ||
-    i === 18 ||
-    i === 20 ||
-    i === 22 ||
-    i === 25 ||
-    i === 27 ||
-    i === 29 ||
-    i === 31 ||
-    i === 32 ||
-    i === 34 ||
-    i === 36 ||
-    i === 38 ||
-    i === 41 ||
-    i === 43 ||
-    i === 45 ||
-    i === 47 ||
-    i === 48 ||
-    i === 50 ||
-    i === 52 ||
-    i === 54 ||
-    i === 57 ||
-    i === 59 || 
-    i === 61 ||
-    i === 63
-    )
-  return true
-  return false
+  if (i % 16 < 8) {if (i % 2 === 0) {return true} else {return false}}
+  else {if (i % 2 === 1) {return true} else {return false}}
 }
 
 // Given a piece code (BB, WW, etc...) return the image associated with that piece
 function pieceImage(pieceCode)
 {
-  if (pieceCode === "BR")
-    return <img src = {BR} alt = "Black Rook" />
-  else if (pieceCode === "BN")
-    return <img src = {BN} alt = "Black Knight" />
-  else if (pieceCode === "BB")
-    return <img src = {BB} alt = "Black Bishop" />
-  else if (pieceCode === "BQ")
-    return <img src = {BQ} alt = "Black Queen" />
-  else if (pieceCode === "BK")
-    return <img src = {BK} alt = "Black King" />
-  else if (pieceCode === "BP")
-    return <img src = {BP} alt = "Black Pawn" />
-  else if (pieceCode === "WR")
-    return <img src = {WR} alt = "White Rook" />
-  else if (pieceCode === "WN")
-    return <img src = {WN} alt = "White Knight" />
-  else if (pieceCode === "WB")
-    return <img src = {WB} alt = "White Bishop" />
-  else if (pieceCode === "WQ")
-    return <img src = {WQ} alt = "White Queen" />
-  else if (pieceCode === "WK")
-    return <img src = {WK} alt = "White King" />
-  else if (pieceCode === "WP")
-    return <img src = {WP} alt = "White Pawn" />
-  else
-    return ""
+  if (pieceCode === "BR") {return <img src = {BR} alt = "Black Rook" />}
+  else if (pieceCode === "BN") {return <img src = {BN} alt = "Black Knight" />}
+  else if (pieceCode === "BB") {return <img src = {BB} alt = "Black Bishop" />}
+  else if (pieceCode === "BQ") {return <img src = {BQ} alt = "Black Queen" />}
+  else if (pieceCode === "BK") {return <img src = {BK} alt = "Black King" />}
+  else if (pieceCode === "BP") {return <img src = {BP} alt = "Black Pawn" />}
+  else if (pieceCode === "WR") {return <img src = {WR} alt = "White Rook" />}
+  else if (pieceCode === "WN") {return <img src = {WN} alt = "White Knight" />}
+  else if (pieceCode === "WB") {return <img src = {WB} alt = "White Bishop" />}
+  else if (pieceCode === "WQ") {return <img src = {WQ} alt = "White Queen" />}
+  else if (pieceCode === "WK") {return <img src = {WK} alt = "White King" />}
+  else if (pieceCode === "WP") {return <img src = {WP} alt = "White Pawn" />}
+  else {return ""}
 }
 /////////////// Audio
 function play() {
@@ -184,8 +138,7 @@ class Board extends React.Component {
     let renderBoard = [];
     if (this.props.isBoardFlipped){
       // to play from black's POV
-      for (let i = 63; i >=7; i = i - 8)
-      {
+      for (let i = 63; i >=7; i = i - 8){
         let row = [this.renderSquare(i)]
         for (let n = 1; n <8; n++)
         {
@@ -197,20 +150,16 @@ class Board extends React.Component {
     }
     else{
       // to play from white's POV
-      for (let i = 0; i <=56; i = i + 8)
-      {
+      for (let i = 0; i <=56; i = i + 8){
         let row = [this.renderSquare(i)]
-        for (let n = 1; n <8; n++)
-        {
+        for (let n = 1; n <8; n++){
           row.push(this.renderSquare(i + n))
         }
         row = <div>{row}</div>
         renderBoard.push(row)
       }
     }
-    return(
-      <div>{renderBoard}</div>
-      )
+    return(<div>{renderBoard}</div>)
   }
 }
 
