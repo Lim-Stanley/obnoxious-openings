@@ -14,10 +14,11 @@ import WQ from './Chess_Pieces/White Queen.png'
 import WK from './Chess_Pieces/White King.png'
 import WP from './Chess_Pieces/White Pawn.png'
 
+import trumpetC from './Piece Sounds/trumpet_C4.mp3'
+
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import SelectInput from '@mui/material/Select/SelectInput';
 
 // GREEN COLOR: #769656
 // CREAM COLOR: #eeeed2
@@ -29,8 +30,11 @@ import SelectInput from '@mui/material/Select/SelectInput';
 /////////////////////////////////////////////////////////////
 // Make enpassant possible if you just got to the point in history where it is about to be played 
 //     (easy, just make canEnpassant an array)
-// Implement pawn promotion 
-// Implement drag and drop
+// Pawn promotion options
+// Drag and drop
+// Sound
+// Opening prep system
+// Pawn history gxh5 instead of just h5
 
 function Square(props) {
   if (isLightSquare(props.squareNumber))
@@ -159,7 +163,11 @@ function pieceImage(pieceCode)
   else
     return ""
 }
-
+/////////////// Audio
+function play() {
+  new Audio(trumpetC).play()
+}
+///////////////////////
 class Board extends React.Component {
   renderSquare(i) {
     return (
@@ -318,8 +326,6 @@ class Game extends React.Component {
       blackKingLocation: 4,
       whiteKingLocation: 60,
       isBoardFlipped: false,
-      renderPromotion: false,
-      promotionPiece: null
     };
   }
 
@@ -343,11 +349,6 @@ class Game extends React.Component {
     tempArray[61] = "WB"
     tempArray[62] = "WN"
     tempArray[63] = "WR"
-
-
-    tempArray[7] = "empty"
-    tempArray[15] = "WP"
-
     return tempArray;
   }
 
@@ -358,6 +359,7 @@ class Game extends React.Component {
     const current = history[history.length - 1];
     const squares = current.squares.slice();
 
+    play()
     // Temporarily do the move to see if it puts your king in check, and if it does, don't allow it
     let tempDelete = squares[i]
     squares[i] = pieceCode
@@ -1551,70 +1553,26 @@ class Game extends React.Component {
 
   forwardSlashDiagOf(i)
   {
-    if (i == 0)
-      return "a8"
-    if (i == 8 || i == 1)
-      return "a7-b8"
-    if (i == 16 || i == 9 || i == 2)
-      return "a6-c8"
-    if (i == 24 || i == 17 || i == 10 || i == 3)
-      return "a5-d8"
-    if (i == 32 || i == 25 || i == 18 || i == 11 || i == 4)
-      return "a4-e8"
-    if (i == 40 || i == 33 || i == 26 || i == 19 || i == 12 || i == 5)
-      return "a3-f8"
-    if (i == 48 || i == 41 || i == 34 || i == 27 || i == 20 || i == 13 || i == 6)
-      return "a2-g8"
-    if (i == 56 || i == 49 || i == 42 || i == 35 || i == 28 || i == 21 || i == 14 || i == 7)
-      return "a1-h8"
-    if (i == 57 || i == 50 || i == 43 || i == 36 || i == 29 || i == 22 || i == 15)
-      return "b1-h7"
-    if (i == 58 || i == 51 || i == 44 || i == 37 || i == 30 || i == 23)
-      return "c1-h6"
-    if (i == 59 || i == 52 || i == 45 || i == 38 || i == 31)
-      return "d1-h5"
-    if (i == 60 || i == 53 || i == 46 || i == 39)
-      return "e1-h4"
-    if (i == 61 || i == 54 || i == 47)
-      return "f1-h3"
-    if (i == 62 || i == 55)
-      return "g1-h2"
-    if (i == 63)
-      return "h1"
+    if (i % 7 === 0) {if (i === 0) {return "a8"} else if (i === 63) {return "h1"} else {return "a1-h8"}}
+    if (i % 7 === 1) {if (i < 7 * 2) {return "a7-b8"} else {return "b1-h7"}}
+    if (i % 7 === 2) {if (i < 7 * 3) {return "a6-c8"} else {return "c1-h6"}}
+    if (i % 7 === 3) {if (i < 7 * 4) {return "a5-d8"} else {return "d1-h5"}}
+    if (i % 7 === 4) {if (i < 7 * 5) {return "a4-e8"} else {return "e1-h4"}}
+    if (i % 7 === 5) {if (i < 7 * 6) {return "a3-f8"} else {return "f1-h3"}}
+    if (i % 7 === 6) {if (i < 7 * 7) {return "a2-g8"} else {return "g1-h2"}}
   }
 
   backSlashDiagOf(i)
   {
-    if (i == 7)
-      return "h8"
-    if (i == 6 || i == 15)
-      return "g8-h7"
-    if (i == 5 || i == 14 || i == 23)
-      return "f8-h6"
-    if (i == 4 || i == 13 || i == 22 || i == 31)
-      return "e8-h5"
-    if (i == 3 || i == 12 || i == 21 || i == 30 || i == 39)
-      return "d8-h4"
-    if (i == 2 || i == 11 || i == 20 || i == 29 || i == 38 || i == 47)
-      return "c8-h3"
-    if (i == 1 || i == 10 || i == 19 || i == 28 || i == 37 || i == 46 || i == 55)
-      return "b8-h2"
-    if (i == 0 || i == 9  || i == 18 || i == 27 || i == 36 || i == 45 || i == 54 || i == 63)
-      return "a8-h1"
-    if (i == 8 || i == 17 || i == 26 || i == 35 || i == 44 || i == 53 || i == 62)
-      return "a7-g1"
-    if (i == 16 || i == 25 || i == 34 || i == 43 || i == 52 || i == 61)
-      return "a6-f1"
-    if (i == 24 || i == 33 || i == 42 || i == 51 || i == 60)
-      return "a5-e1"
-    if (i == 32 || i == 41 || i == 50 || i == 59)
-      return "a4-d1"
-    if (i == 40 || i == 49 || i == 58)
-      return "a3-c1"
-    if (i == 48 || i == 57)
-      return "a2-b1"
-    if (i == 56)
-      return "a1"
+    if (i % 9 === 0) {return "a8-h1"}
+    if (i % 9 === 1) {return "b8-h2"}
+    if (i % 9 === 2) {if (i < 9 * 6) {return "c8-h3"} else {return "a1"}}
+    if (i % 9 === 3) {if (i < 9 * 5) {return "d8-h4"} else {return "a2-b1"}}
+    if (i % 9 === 4) {if (i < 9 * 4) {return "e8-h5"} else {return "a3-c1"}}
+    if (i % 9 === 5) {if (i < 9 * 3) {return "f8-h6"} else {return "a4-d1"}}
+    if (i % 9 === 6) {if (i < 9 * 2) {return "g8-h7"} else {return "a5-e1"}}
+    if (i % 9 === 7) {if (i < 9 * 1) {return "h8"} else {return "a6-f1"}}
+    if (i % 9 === 8) {return "a7-g1"}
   }
 
   // Returns to the first click from the second
@@ -1711,7 +1669,6 @@ class Game extends React.Component {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
 
-    console.log("i get called and renderPromotion is " + this.state.renderPromotion)
     let moves = history.map((step, move) => {
       let desc = moveHistory[move]
 
@@ -1808,7 +1765,7 @@ class Game extends React.Component {
           <div className = "status">{status}</div>
           <div>{flipBoard}</div>
           <div>{moves}</div>
-        </div>
+        </div> 
       </div>
     );
   }
