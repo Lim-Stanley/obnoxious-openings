@@ -28,13 +28,10 @@ import './index.css';
 /////////////////////////////////////////////////////////////
 //////////       TO DO LIST   ///////////////////////////////
 /////////////////////////////////////////////////////////////
-// Make enpassant possible if you just got to the point in history where it is about to be played 
-//     (easy, just make canEnpassant an array)
 // Pawn promotion options
 // Drag and drop
 // Sound
 // Opening prep system
-// Pawn history gxh5 instead of just h5
 
 function Square(props) {
   let bgColor = ""
@@ -507,6 +504,7 @@ class Game extends React.Component {
   }
 
   jumpTo(step) {
+    console.log("in jump to")
     this.setState({
       stepNumber: step,
       whiteIsMoving: (step % 2) === 0,
@@ -1506,7 +1504,7 @@ class Game extends React.Component {
     const moveHistory = this.state.moveHistory;
     const history = this.state.history;
     const current = history[this.state.stepNumber];
-
+    
     let moves = history.map((step, move) => {
       let desc = moveHistory[move]
 
@@ -1585,6 +1583,14 @@ class Game extends React.Component {
       status = (this.state.whiteIsMoving ? "White" : "Black") + " to move.";
       if (inCheck.at(-1))
         status = "Check! " + status
+    }
+
+    let doOPENINGS = false
+    if (doOPENINGS){
+      let scotchPotterVariation = ["empty", "e4", "e5", "Nf3", "Nc6", "d4", "exd4", "Nxd4", "Bc5", "Nb3"]
+      if (moveHistory.at(this.state.stepNumber) !== scotchPotterVariation[this.state.stepNumber]){
+        status = "Incorrect! Return to a previous move to try again."
+      }
     }
 
     const flipBoard = <button className = "moves" onClick={() => this.setState({isBoardFlipped: !this.state.isBoardFlipped})}>
