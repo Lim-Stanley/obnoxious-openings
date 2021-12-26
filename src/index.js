@@ -37,60 +37,24 @@ import './index.css';
 // Pawn history gxh5 instead of just h5
 
 function Square(props) {
-  if (isLightSquare(props.squareNumber))
-  {
-    if (props.selectedSquare != null && props.selectedSquare === props.squareNumber)
-    return (
-      <Button onClick={props.onClick} style={{
-        backgroundColor: "#f6f669",
-        alignItems: 'center',
-        borderRadius: 0,
-        width: '80px', 
-        height: '80px'
-      }}>
-        {pieceImage(props.pieceCode)}
-      </Button>
-    );
-
-    return (
-      <Button onClick={props.onClick} style={{
-        backgroundColor: "#eeeed2",
-        alignItems: 'center',
-        borderRadius: 0,
-        width: '80px', 
-        height: '80px'
-      }}>
-        {pieceImage(props.pieceCode)}
-      </Button>
-    );
-  }
-  else
-  {
-    if (props.selectedSquare != null && props.selectedSquare === props.squareNumber)
-    return (
-      <Button onClick={props.onClick} style={{
-        backgroundColor: "#baca2b",
-        alignItems: 'center',
-        borderRadius: 0,
-        width: '80px', 
-        height: '80px'
-      }}>
-        {pieceImage(props.pieceCode)}
-      </Button>
-    );
-
-    return (
-      <Button onClick={props.onClick} style={{
-        backgroundColor: "#769656",
-        alignItems: 'center',
-        borderRadius: 0,
-        width: '80px', 
-        height: '80px'
-      }}>
-        {pieceImage(props.pieceCode)}
-      </Button>
-    );
-  }
+  let bgColor = ""
+  if (isLightSquare(props.squareNumber)){
+    if (props.selectedSquare != null && props.selectedSquare === props.squareNumber){bgColor = "#f6f669"}
+    else {bgColor = "#eeeed2"}}
+  else{
+    if (props.selectedSquare != null && props.selectedSquare === props.squareNumber) {bgColor = "#baca2b"}
+    else {bgColor = "#769656"}}
+  return (
+    <Button onClick={props.onClick} style={{
+      backgroundColor: bgColor,
+      alignItems: 'center',
+      borderRadius: 0,
+      width: '80px', 
+      height: '80px'
+    }}>
+      {pieceImage(props.pieceCode)}
+    </Button>
+  );
 }
 
 // Checks if i is a light square
