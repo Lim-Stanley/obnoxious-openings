@@ -14,7 +14,7 @@ import WQ from './Chess_Pieces/White Queen.png'
 import WK from './Chess_Pieces/White King.png'
 import WP from './Chess_Pieces/White Pawn.png'
 
-import trumpetC from './Piece Sounds/trumpet_C4.mp3'
+import trumpetC from './Piece Sounds/trumpet/trumpet_C4.mp3'
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -222,87 +222,56 @@ function isIn(i, list){
   return false;
 }
 
+function makeList(startingNumber, increment, numberOfElements){
+  let returnList = []
+  for (let i = 0; i < numberOfElements; i++){
+    returnList.push(startingNumber + increment*i)
+  }
+  return returnList
+}
+
 function // a function that takes any given direction and returns a list of all squares in that direction in order
 makeSquareList(direction){
   switch(direction){
-    case "a":
-      return [0, 8, 16, 24, 32, 40, 48, 56]
-    case "b":
-      return [1, 9, 17, 25, 33, 41, 49, 57]
-    case "c":
-      return [2, 10, 18, 26, 34, 42, 50, 58]
-    case "d":
-      return [3, 11, 19, 27, 35, 43, 51, 59]
-    case "e":
-      return [4, 12, 20, 28, 36, 44, 52, 60]
-    case "f":
-      return [5, 13, 21, 29, 37, 45, 53, 61]
-    case "g":
-      return [6, 14, 22, 30, 38, 46, 54, 62]
-    case "h":
-      return [7, 15, 23, 31, 39, 47, 55, 63]
-    case "1":
-      return [56, 57, 58, 59, 60, 61, 62, 63]
-    case "2":
-      return [48, 49, 50, 51, 52, 53, 54, 55]
-    case "3":
-      return [40, 41, 42, 43, 44, 45, 46, 47]
-    case "4":
-      return [32, 33, 34, 35, 36, 37, 38, 39]
-    case "5":
-      return [24, 25, 26, 27, 28, 29, 30, 31]
-    case "6":
-      return [16, 17, 18, 19, 20, 21, 22, 23]
-    case "7":
-      return [8, 9, 10, 11, 12, 13, 14, 15]
-    case "8":
-      return [0, 1, 2, 3, 4, 5, 6, 7]
-    case "a6-c8":
-      return [2, 9, 16]
-    case "a5-d8":
-      return [3, 10, 17, 24]
-    case "a4-e8":
-      return [4, 11, 18, 25, 32]
-    case "a3-f8":
-      return [5, 12, 19, 26, 33, 40]
-    case "a2-g8":
-      return [6, 13, 20, 27, 34, 41, 48]
-    case "a1-h8":
-      return [7, 14, 21, 28, 35, 42, 49, 56]
-    case "b1-h7":
-      return [15, 22, 29, 36, 43, 50, 57]
-    case "c1-h6":
-      return [23, 30, 37, 44, 51, 58]
-    case "d1-h5":
-      return [31, 38, 45, 52, 59]
-    case "e1-h4":
-      return [39, 46, 53, 60]
-    case "f1-h3":
-      return [47, 54, 61]
-    case "f8-h6":
-      return [5, 14, 23]
-    case "e8-h5":
-      return [4, 13, 22, 31]
-    case "d8-h4":
-      return [3, 12, 21, 30, 39]
-    case "c8-h3":
-      return [2, 11, 20, 29, 38, 47]
-    case "b8-h2":
-      return [1, 10, 19, 28, 37, 46, 55]
-    case "a8-h1":
-      return [0, 9, 18, 27, 36, 45, 54, 63]
-    case "a7-g1":
-      return [8, 17, 26, 35, 44, 53, 62]
-    case "a6-f1":
-      return [16, 25, 34, 43, 52, 61]
-    case "a5-e1":
-      return [24, 33, 42, 51, 60]
-    case "a4-d1":
-      return [32, 41, 50, 59]
-    case "a3-c1":
-      return [40, 49, 58]
-    case "":
-      return []
+    case "a": return makeList(0, 8, 8)
+    case "b": return makeList(1, 8, 8)
+    case "c": return makeList(2, 8, 8)
+    case "d": return makeList(3, 8, 8)
+    case "e": return makeList(4, 8, 8)
+    case "f": return makeList(5, 8, 8)
+    case "g": return makeList(6, 8, 8)
+    case "h": return makeList(7, 8, 8)
+    case "1": return makeList(56, 1, 8)
+    case "2": return makeList(48, 1, 8)
+    case "3": return makeList(40, 1, 8)
+    case "4": return makeList(32, 1, 8)
+    case "5": return makeList(24, 1, 8)
+    case "6": return makeList(16, 1, 8)
+    case "7": return makeList(8, 1, 8)
+    case "8": return makeList(0, 1, 8)
+    case "a6-c8": return makeList(2, 7, 3)
+    case "a5-d8": return makeList(3, 7, 4)
+    case "a4-e8": return makeList(4, 7, 5)
+    case "a3-f8": return makeList(5, 7, 6)
+    case "a2-g8": return makeList(6, 7, 7)
+    case "a1-h8": return makeList(7, 7, 8)
+    case "b1-h7": return makeList(15, 7, 7)
+    case "c1-h6": return makeList(23, 7, 6)
+    case "d1-h5": return makeList(31, 7, 5)
+    case "e1-h4": return makeList(39, 7, 4)
+    case "f1-h3": return makeList(47, 7, 3)
+    case "f8-h6": return makeList(5, 9, 3)
+    case "e8-h5": return makeList(4, 9, 4)
+    case "d8-h4": return makeList(3, 9, 5)
+    case "c8-h3": return makeList(2, 9, 6)
+    case "b8-h2": return makeList(1, 9, 7)
+    case "a8-h1": return makeList(0, 9, 8)
+    case "a7-g1": return makeList(8, 9, 7)
+    case "a6-f1": return makeList(16, 9, 6)
+    case "a5-e1": return makeList(24, 9, 5)
+    case "a4-d1": return makeList(32, 9, 4)
+    case "a3-c1": return makeList(40, 9, 3)
+    case "": return []
   }
 }
 
@@ -1489,15 +1458,14 @@ class Game extends React.Component {
 
     let color = side[0]
     // For every piece on the board, if it is on the side, calculate the squares it controls
-    for (let n = 0; n < 64; n++)
-    {
+    for (let n = 0; n < 64; n++){
       if (squares[n][0] !== color)
         continue;
       let controlList = []
       // Now, we know squares[n] is of the specified color
       switch(squares[n][1]){
         case 'P':
-          controlList = controlList.concat(this.PmoveList(n, this.state.whiteIsMoving)) // NEED TO CHANGE
+          controlList = controlList.concat(this.PmoveList(n, this.state.whiteIsMoving))
           break;
         case 'R':
           controlList = controlList.concat(this.RcontrolList(n, this.state.whiteIsMoving, squares))
@@ -1512,12 +1480,8 @@ class Game extends React.Component {
           controlList = controlList.concat(this.NcontrolList(n))
           break;
       }
-      for (let n = 0; n < controlList.length; n++)
-      {
-        if (controlList[n] === i)
-        {
-          return true;
-        }
+      for (let n = 0; n < controlList.length; n++){
+        if (controlList[n] === i) {return true;}
       }
     }
     return false;
@@ -1525,24 +1489,15 @@ class Game extends React.Component {
 
   colOf(i)
   {
-    if (i % 8 == 0)
-      return "a"
-    else if (i % 8 == 1)
-      return "b"
-    else if (i % 8 == 2)
-      return "c"
-    else if (i % 8 == 3)
-      return "d"
-    else if (i % 8 == 4)
-      return "e"
-    else if (i % 8 == 5)
-      return "f"
-    else if (i % 8 == 6)
-      return "g"
-    else if (i % 8 == 7)
-      return "h"
-    else
-      console.log("invalid piece location " + i)
+    if (i % 8 == 0) {return "a"}
+    else if (i % 8 == 1) {return "b"}
+    else if (i % 8 == 2) {return "c"}
+    else if (i % 8 == 3) {return "d"}
+    else if (i % 8 == 4) {return "e"}
+    else if (i % 8 == 5) {return "f"}
+    else if (i % 8 == 6) {return "g"}
+    else if (i % 8 == 7) {return "h"}
+    else {console.log("invalid piece location " + i)}
     return;
   }
   // Given a piece location, return the row it is in
