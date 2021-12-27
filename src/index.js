@@ -87,6 +87,7 @@ import './index.css';
 // Drag and drop
 // Sound
 // Opening prep system
+// Implement history when promotion (d8 = Q)
 // Bug: cannot capture out of check, because rowOf returns an int
 //     make rowOf return a string, and make the few functions that do arithmetic with the output of rowOf turn the
 //     string back into an int
@@ -137,7 +138,6 @@ function pieceImage(pieceCode){
 /////////////// Audio
 function playMove(row, pieceCode) {
   let audio;
-  console.log(pieceCode[1])
   switch(pieceCode[1]){
     case "P":
       switch(row){
@@ -394,8 +394,17 @@ class Game extends React.Component {
     // Make moveHistory label (e4, Bh5, etc..)
     if (pieceCode == "WP" || pieceCode == "BP"){
       moveLabel = this.colOf(i) + this.rowOf(i)
+      // If it's a capture, add an x
       if (this.colOf(i) !== this.colOf(this.state.pieceLocation))
         moveLabel = this.colOf(this.state.pieceLocation) + "x" + moveLabel
+      // if it's a promotion, do the equals thing
+      if ((i <8 && i >=0) || (i < 64 && i >= 56)){
+        moveLabel = moveLabel + "=Q"
+        if (this.state.whiteIsMoving)
+          pieceCode = "WQ"
+        else
+          pieceCode = "BQ"
+      }
     }
     else if (squares[i] != "empty")
       moveLabel = pieceCode[1] + "x" + this.colOf(i) + this.rowOf(i)
@@ -641,7 +650,6 @@ class Game extends React.Component {
   }
 
   jumpTo(step) {
-    console.log("in jump to")
     this.setState({
       stepNumber: step,
       whiteIsMoving: (step % 2) === 0,
@@ -1292,7 +1300,7 @@ class Game extends React.Component {
         }
         if (i >= 0 && i < 8){
           this.choosePromotion(i, this.state.whiteIsMoving)
-          this.Update(i, "WQ")
+          this.Update(i, "WP")
         }
         else
           this.Update(i, "WP")
@@ -1312,7 +1320,7 @@ class Game extends React.Component {
           else {this.returnToFirstClick(); return}
         }
         if (i >= 56 && i < 64)
-          this.Update(i, "BQ")
+          this.Update(i, "BP")
         else
           this.Update(i, "BP")
         this.returnToFirstClick()
@@ -1725,7 +1733,7 @@ class Game extends React.Component {
         status = "Check! " + status
     }
 
-    let doOPENINGS = true
+    let doOPENINGS = false
     if (doOPENINGS){
       let scotchPotterVariation = ["empty", "e4", "e5", "Nf3", "Nc6", "d4", "exd4", "Nxd4", "Bc5", "Nb3"]
       if (moveHistory.at(this.state.stepNumber) !== scotchPotterVariation[this.state.stepNumber]){
