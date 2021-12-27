@@ -14,7 +14,59 @@ import WQ from './Chess_Pieces/White Queen.png'
 import WK from './Chess_Pieces/White King.png'
 import WP from './Chess_Pieces/White Pawn.png'
 
-import trumpetC from './Piece Sounds/trumpet/trumpet_C4.mp3'
+import clarinetC1 from './Piece Sounds/clarinet/clarinet_C4.mp3'
+import clarinetD from './Piece Sounds/clarinet/clarinet_D4.mp3'
+import clarinetE from './Piece Sounds/clarinet/clarinet_E4.mp3'
+import clarinetF from './Piece Sounds/clarinet/clarinet_F4.mp3'
+import clarinetG from './Piece Sounds/clarinet/clarinet_G4.mp3'
+import clarinetA from './Piece Sounds/clarinet/clarinet_A4.mp3'
+import clarinetB from './Piece Sounds/clarinet/clarinet_B4.mp3'
+import clarinetC2 from './Piece Sounds/clarinet/clarinet_C5.mp3'
+
+import fluteC1 from './Piece Sounds/flute/flute_C5.mp3'
+import fluteD from './Piece Sounds/flute/flute_D5.mp3'
+import fluteE from './Piece Sounds/flute/flute_E5.mp3'
+import fluteF from './Piece Sounds/flute/flute_F5.mp3'
+import fluteG from './Piece Sounds/flute/flute_G5.mp3'
+import fluteA from './Piece Sounds/flute/flute_A5.mp3'
+import fluteB from './Piece Sounds/flute/flute_B5.mp3'
+import fluteC2 from './Piece Sounds/flute/flute_C6.mp3'
+
+import tromboneC1 from './Piece Sounds/trombone/trombone_C3.mp3'
+import tromboneD from './Piece Sounds/trombone/trombone_D3.mp3'
+import tromboneE from './Piece Sounds/trombone/trombone_E3.mp3'
+import tromboneF from './Piece Sounds/trombone/trombone_F3.mp3'
+import tromboneG from './Piece Sounds/trombone/trombone_G3.mp3'
+import tromboneA from './Piece Sounds/trombone/trombone_A3.mp3'
+import tromboneB from './Piece Sounds/trombone/trombone_B3.mp3'
+import tromboneC2 from './Piece Sounds/trombone/trombone_C4.mp3'
+
+import trumpetC1 from './Piece Sounds/trumpet/trumpet_C4.mp3'
+import trumpetD from './Piece Sounds/trumpet/trumpet_D4.mp3'
+import trumpetE from './Piece Sounds/trumpet/trumpet_E4.mp3'
+import trumpetF from './Piece Sounds/trumpet/trumpet_F4.mp3'
+import trumpetG from './Piece Sounds/trumpet/trumpet_G4.mp3'
+import trumpetA from './Piece Sounds/trumpet/trumpet_A4.mp3'
+import trumpetB from './Piece Sounds/trumpet/trumpet_B4.mp3'
+import trumpetC2 from './Piece Sounds/trumpet/trumpet_C5.mp3'
+
+import tubaC1 from './Piece Sounds/tuba/tuba_C2.mp3'
+import tubaD from './Piece Sounds/tuba/tuba_D2.mp3'
+import tubaE from './Piece Sounds/tuba/tuba_E2.mp3'
+import tubaF from './Piece Sounds/tuba/tuba_F2.mp3'
+import tubaG from './Piece Sounds/tuba/tuba_G2.mp3'
+import tubaA from './Piece Sounds/tuba/tuba_A2.mp3'
+import tubaB from './Piece Sounds/tuba/tuba_B2.mp3'
+import tubaC2 from './Piece Sounds/tuba/tuba_C3.mp3'
+
+import violinC1 from './Piece Sounds/violin/violin_C5.mp3'
+import violinD from './Piece Sounds/violin/violin_D5.mp3'
+import violinE from './Piece Sounds/violin/violin_E5.mp3'
+import violinF from './Piece Sounds/violin/violin_F5.mp3'
+import violinG from './Piece Sounds/violin/violin_G5.mp3'
+import violinA from './Piece Sounds/violin/violin_A5.mp3'
+import violinB from './Piece Sounds/violin/violin_B5.mp3'
+import violinC2 from './Piece Sounds/violin/violin_C6.mp3'
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -25,6 +77,9 @@ import './index.css';
 // Yellow on light square: #f6f669
 // Yellow on dark square: #baca2b
 
+// tuba: king, violin: pawn, clarinet: knight, flute: bishop, trumpet: queen, bone: rook
+// Get special sounds for en passant, castling, and promotion
+
 /////////////////////////////////////////////////////////////
 //////////       TO DO LIST   ///////////////////////////////
 /////////////////////////////////////////////////////////////
@@ -32,6 +87,9 @@ import './index.css';
 // Drag and drop
 // Sound
 // Opening prep system
+// Bug: cannot capture out of check, because rowOf returns an int
+//     make rowOf return a string, and make the few functions that do arithmetic with the output of rowOf turn the
+//     string back into an int
 
 function Square(props) {
   let bgColor = ""
@@ -77,8 +135,87 @@ function pieceImage(pieceCode){
   else {return ""}
 }
 /////////////// Audio
-function play() {
-  new Audio(trumpetC).play()
+function playMove(row, pieceCode) {
+  let audio;
+  console.log(pieceCode[1])
+  switch(pieceCode[1]){
+    case "P":
+      switch(row){
+        case "1": {audio = violinC1; break;}
+        case "2": {audio = violinD; break;}
+        case "3": {audio = violinE; break;}
+        case "4": {audio = violinF; break;}
+        case "5": {audio = violinG; break;}
+        case "6": {audio = violinA; break;}
+        case "7": {audio = violinB; break;}
+        case "8": {audio = violinC2; break;}
+      }
+      break;
+    case "R":
+      switch(row){
+        case "1": {audio = tromboneC1; break;}
+        case "2": {audio = tromboneD; break;}
+        case "3": {audio = tromboneE; break;}
+        case "4": {audio = tromboneF; break;}
+        case "5": {audio = tromboneG; break;}
+        case "6": {audio = tromboneA; break;}
+        case "7": {audio = tromboneB; break;}
+        case "8": {audio = tromboneC2; break;}
+      }
+      break;
+    case "N":
+      switch(row){
+        case "1": {audio = clarinetC1; break;}
+        case "2": {audio = clarinetD; break;}
+        case "3": {audio = clarinetE; break;}
+        case "4": {audio = clarinetF; break;}
+        case "5": {audio = clarinetG; break;}
+        case "6": {audio = clarinetA; break;}
+        case "7": {audio = clarinetB; break;}
+        case "8": {audio = clarinetC2; break;}
+      }
+      break;
+    case "B":
+      switch(row){
+        case "1": {audio = fluteC1; break;}
+        case "2": {audio = fluteD; break;}
+        case "3": {audio = fluteE; break;}
+        case "4": {audio = fluteF; break;}
+        case "5": {audio = fluteG; break;}
+        case "6": {audio = fluteA; break;}
+        case "7": {audio = fluteB; break;}
+        case "8": {audio = fluteC2; break;}
+      }
+      break;
+    case "Q":
+      switch(row){
+        case "1": {audio = trumpetC1; break;}
+        case "2": {audio = trumpetD; break;}
+        case "3": {audio = trumpetE; break;}
+        case "4": {audio = trumpetF; break;}
+        case "5": {audio = trumpetG; break;}
+        case "6": {audio = trumpetA; break;}
+        case "7": {audio = trumpetB; break;}
+        case "8": {audio = trumpetC2; break;}
+      }
+      break;
+    case "K":
+      switch(row){
+        case "1": {audio = tubaC1; break;}
+        case "2": {audio = tubaD; break;}
+        case "3": {audio = tubaE; break;}
+        case "4": {audio = tubaF; break;}
+        case "5": {audio = tubaG; break;}
+        case "6": {audio = tubaA; break;}
+        case "7": {audio = tubaB; break;}
+        case "8": {audio = tubaC2; break;}
+      }
+      break;
+    case "o":
+      audio = tubaC1
+  }
+  console.log(audio)
+  new Audio(audio).play()
 }
 ///////////////////////
 class Board extends React.Component {
@@ -226,7 +363,6 @@ class Game extends React.Component {
     const current = history[history.length - 1];
     const squares = current.squares.slice();
 
-    play()
     // Temporarily do the move to see if it puts your king in check, and if it does, don't allow it
     let tempDelete = squares[i]
     squares[i] = pieceCode
@@ -253,6 +389,7 @@ class Game extends React.Component {
         squares[this.state.pieceLocation] = "BK"
     }
 
+    playMove(this.rowOf(i), pieceCode)
     let moveLabel = ""
     // Make moveHistory label (e4, Bh5, etc..)
     if (pieceCode == "WP" || pieceCode == "BP"){
@@ -743,12 +880,12 @@ class Game extends React.Component {
         // Check if move is a valid move 
         if (n < 2)
         {
-          if (this.rowOf(coordinate) - 1 == this.rowOf(i))
+          if (parseInt(this.rowOf(coordinate)) - 1 == parseInt(this.rowOf(i)))
             moveList.push(coordinate)
         }
         else
         {
-          if (this.rowOf(coordinate) - 2 == this.rowOf(i))
+          if (parseInt(this.rowOf(coordinate)) - 2 == parseInt(this.rowOf(i)))
             moveList.push(coordinate)
         }
       }
@@ -757,12 +894,12 @@ class Game extends React.Component {
       {
         if (n < 2)
         {
-          if (this.rowOf(coordinate) + 1 == this.rowOf(i))
+          if (parseInt(this.rowOf(coordinate)) + 1 == parseInt(this.rowOf(i)))
             moveList.push(coordinate)
         }
         else
         {
-          if (this.rowOf(coordinate) + 2 == this.rowOf(i))
+          if (parseInt(this.rowOf(coordinate)) + 2 == parseInt(this.rowOf(i)))
             moveList.push(coordinate)
         }
       }
@@ -1153,8 +1290,10 @@ class Game extends React.Component {
           }
           else {this.returnToFirstClick(); return}
         }
-        if (i >= 0 && i < 8)
+        if (i >= 0 && i < 8){
+          this.choosePromotion(i, this.state.whiteIsMoving)
           this.Update(i, "WQ")
+        }
         else
           this.Update(i, "WP")
         this.returnToFirstClick()
@@ -1301,7 +1440,9 @@ class Game extends React.Component {
   {
     // Determine all squares between the two pieces
     // use Squarelist, a function that takes any given direction and returns a list of all squares in that direction in order
+    console.log("direction is " + direction)
     let squareList = makeSquareList(direction)
+    console.log("squarelist is " + squareList)
     let index1 = -1
     let index2 = -1
     for (let i = 0; i < squareList.length; i++)
@@ -1382,9 +1523,8 @@ class Game extends React.Component {
     return;
   }
   // Given a piece location, return the row it is in
-  rowOf(i)
-  {
-    return (8 - Math.floor(i/8))
+  rowOf(i){
+    return (8 - Math.floor(i/8)).toString()
   }
 
   forwardSlashDiagOf(i)
@@ -1585,7 +1725,7 @@ class Game extends React.Component {
         status = "Check! " + status
     }
 
-    let doOPENINGS = false
+    let doOPENINGS = true
     if (doOPENINGS){
       let scotchPotterVariation = ["empty", "e4", "e5", "Nf3", "Nc6", "d4", "exd4", "Nxd4", "Bc5", "Nb3"]
       if (moveHistory.at(this.state.stepNumber) !== scotchPotterVariation[this.state.stepNumber]){
