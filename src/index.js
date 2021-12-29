@@ -14,6 +14,8 @@ import WQ from './Chess_Pieces/White Queen.png'
 import WK from './Chess_Pieces/White King.png'
 import WP from './Chess_Pieces/White Pawn.png'
 
+import enPassantSound from './Piece Sounds/En passant.mp3'
+
 import clarinetC1 from './Piece Sounds/clarinet/clarinet_C4.mp3'
 import clarinetD from './Piece Sounds/clarinet/clarinet_D4.mp3'
 import clarinetE from './Piece Sounds/clarinet/clarinet_E4.mp3'
@@ -88,7 +90,7 @@ import './index.css';
 //    Make search bar
 //    Find a way to load the game everytime the state is updated
 // Get special sounds for en passant, castling, and promotion
-// CAN'T CASTLE IF KING HAS ALREADY MOVED
+// Implement en passant for a specific square
 
 function Square(props) {
   let bgColor = ""
@@ -211,6 +213,11 @@ function playMove(row, pieceCode) {
       break;
     case "o":
       audio = tubaC1
+      new Audio(tromboneE).play()
+      new Audio(tromboneG).play()
+  }
+  if (pieceCode[2] === "e"){
+    audio = enPassantSound
   }
   console.log(audio)
   new Audio(audio).play()
@@ -392,7 +399,7 @@ class Game extends React.Component {
     playMove(this.rowOf(i), pieceCode)
     let moveLabel = ""
     // Make moveHistory label (e4, Bh5, etc..)
-    if (pieceCode == "WP" || pieceCode == "BP"){
+    if (pieceCode == "WP" || pieceCode == "BP" || pieceCode == "WPe" || pieceCode == "BPe"){
       moveLabel = this.colOf(i) + this.rowOf(i)
       // If it's a capture, add an x
       if (this.colOf(i) !== this.colOf(this.state.pieceLocation))
@@ -442,13 +449,17 @@ class Game extends React.Component {
       this.setState({blackKingLocation: i, blackKingMoved: true})
       squares[i] = pieceCode;
     }
+    else if (pieceCode[2] === "e"){
+      if (this.state.whiteIsMoving) {squares[i] = "WP"}
+      else {squares[i] = "BP"}
+    }
     else
       squares[i] = pieceCode;
     squares[this.state.pieceLocation] = "empty";
 
     // If en passant just happened, clear out the other pawn too
-    if ((pieceCode === "WP" && (i<24 && i >=16) && (this.colOf(this.state.pieceLocation) != this.colOf(i)) && (canEnPassant.at(-1))) ||
-        (pieceCode === "BP" && (i<48 && i >=40) && (this.colOf(this.state.pieceLocation) != this.colOf(i)) && (canEnPassant.at(-1)))){
+    if ((pieceCode === "WPe" && (i<24 && i >=16) && (this.colOf(this.state.pieceLocation) != this.colOf(i)) && (canEnPassant.at(-1))) ||
+        (pieceCode === "BPe" && (i<48 && i >=40) && (this.colOf(this.state.pieceLocation) != this.colOf(i)) && (canEnPassant.at(-1)))){
       if (this.state.whiteIsMoving)
         squares[i + 8] = "empty"
       else
@@ -1345,14 +1356,14 @@ class Game extends React.Component {
       if (inCheck.at(-1)){
         if ((isIn(i, this.beBlockedList(this.state.whiteKingLocation, checkingPiece, "White", direction)) ||
           (i + 8) === checkingPiece) && i < 24 && i >= 16 && squares[i + 8] === "BP"){
-          this.Update(i, "WP")
+          this.Update(i, "WPe")
           this.returnToFirstClick()
           return;
         }
         else {this.returnToFirstClick(); return}
       }
       if (i < 24 && i >= 16 && squares[i + 8] === "BP"){
-        this.Update(i, "WP")
+        this.Update(i, "WPe")
         this.returnToFirstClick()
         return;
       }
@@ -1370,14 +1381,17 @@ class Game extends React.Component {
       if (inCheck.at(-1)){
         if ((isIn(i, this.beBlockedList(this.state.blackKingLocation, checkingPiece, "Black", direction)) ||
           (i - 8) === checkingPiece) && i < 48 && i >= 40 && squares[i - 8] === "WP"){
-          this.Update(i, "BP")
+          this.Update(i, "BPe")
           this.returnToFirstClick()
           return;
         }
         else {this.returnToFirstClick(); return}
       }
-      if (i < 48 && i >= 40 && squares[i - 8] === "WP")
-        this.Update(i, "BP")
+      if (i < 48 && i >= 40 && squares[i - 8] === "WP"){
+        this.Update(i, "BPe")
+        this.returnToFirstClick()
+        return;
+      }
     }
     else{
       // no piece to capture and no en passant
