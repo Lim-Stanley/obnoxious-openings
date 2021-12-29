@@ -89,8 +89,8 @@ import './index.css';
 // Opening prep system
 //    Make search bar
 //    Find a way to load the game everytime the state is updated
-// Get special sounds for en passant, castling, and promotion
-// Implement en passant for a specific square
+// Get special sound for promotion
+// Implement en passant for a specific square 
 
 function Square(props) {
   let bgColor = ""
@@ -1672,10 +1672,7 @@ class Game extends React.Component {
     let moves = history.map((step, move) => {
       let desc = moveHistory[move]
 
-      // Figure out how to get every new turn to be on a new line
-
-      if (move === 0)
-      {
+      if (move === 0){
         return <div><button className = "moves" onClick={() => this.jumpTo(move)}>Go to game start</button></div>
       }
       else
@@ -1698,39 +1695,6 @@ class Game extends React.Component {
         }
       }
     });
-
-    // if (this.state.renderPromotion) {
-    //   let pieceList = ["Q", "R", "N", "B"]
-    //   let bgColor = ""
-    //   let colorLetter = ""
-    //   if (isLightSquare(this.state.pieceLocation)){bgColor = "#f6f669"}
-    //   else {bgColor = "#eeeed2"}
-    //   if (this.state.whiteIsMoving) {colorLetter = "W"}
-    //   else {colorLetter = "B"}
-
-    //   let returnList = [<Button style={{
-    //     backgroundColor: bgColor,
-    //     alignItems: 'center',
-    //     borderRadius: 0,
-    //     width: '80px', 
-    //     height: '80px'
-    //   }}>
-    //     {pieceImage(colorLetter + pieceList[0])}
-    //   </Button>]
-
-    //   for (let n = 1; n < 4; n++){
-    //     returnList.push(<Button style={{
-    //       backgroundColor: bgColor,
-    //       alignItems: 'center',
-    //       borderRadius: 0,
-    //       width: '80px', 
-    //       height: '80px'
-    //     }}>
-    //       {pieceImage(colorLetter + pieceList[n])}
-    //     </Button>)
-    //   }
-    //   moves = returnList
-    // }
 
     let winner = false
     let winnerColor = ""
@@ -1760,7 +1724,10 @@ class Game extends React.Component {
     const flipBoard = <button className = "moves" onClick={() => this.setState({isBoardFlipped: !this.state.isBoardFlipped})}>
       Flip Board</button>
 
-    let search = <input type="text" id="myInput" onkeyup="myFunction()" placeholder="search for names.."></input>
+    let search = [<input type="text" id="myInput" placeholder="Search for openings.."></input>]
+    search.push(<ul id="myUL"><li><button>English</button></li>
+    <li><button>Queen's Gambit</button></li>
+    <li><button>Scotch</button></li></ul>)
 
     return (
       <div className="game">
@@ -1768,7 +1735,7 @@ class Game extends React.Component {
           <Board squares={current.squares}
             onClick={i => this.handleClick(i)}
             selectedSquare= {this.state.pieceLocation}
-            isBoardFlipped = {this.state.isBoardFlipped}
+            isBoardFlipped = {this.state.isBoardFlipped} 
           />
         </div>
         <div className="game-info" id = "game-info">
@@ -1782,6 +1749,30 @@ class Game extends React.Component {
   }
 }
 
+function myFunction() {
+  console.log("in myFunction")
+  // Declare variables
+  var input, filter, ul, li, a, i, txtValue;
+  input = document.getElementById('myInput');
+  if (input === null) {return;}
+  filter = input.value.toUpperCase();
+  ul = document.getElementById("myUL");
+  li = ul.getElementsByTagName('li');
+
+  // Loop through all list items, and hide those who don't match the search query
+  for (i = 0; i < li.length; i++) {
+    a = li[i].getElementsByTagName("button")[0];
+    txtValue = a.textContent || a.innerText;
+    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+      li[i].style.display = "";
+    } else {
+      li[i].style.display = "none";
+    }
+  }
+}
+
 // ========================================
 
 ReactDOM.render(<Game />, document.getElementById("root"));
+const searchBar = document.getElementById("myInput")
+searchBar.onkeyup = function() {myFunction()}
