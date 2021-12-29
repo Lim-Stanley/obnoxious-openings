@@ -87,10 +87,13 @@ import './index.css';
 // Pawn promotion options
 // Drag and drop
 // Opening prep system
-//    Make search bar
 //    Find a way to load the game everytime the state is updated
 // Get special sound for promotion
 // Implement en passant for a specific square 
+// BUG: king cannot move out of check
+// Sound when you try to move when checked
+// Make search bar designed like chess.com search bar
+// Make box at top to show current selected opening
 
 function Square(props) {
   let bgColor = ""
@@ -329,24 +332,29 @@ class Game extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      history: [
-        {
+      history: [{
           squares: this.initializeBoard()
-        }
-      ],
+      }],
       moveHistory: ["empty"],
-      canEnPassant: [false],
       stepNumber: 0,
       whiteIsMoving: true,
+      // For movement
       clickNumber: 1,
       movingPiece: null,
       pieceLocation: null,
+      // For Checks
       inCheck: [false],
       blackKingLocation: 4,
       whiteKingLocation: 60,
+      // For board flip mechanic
       isBoardFlipped: false,
+      // For en passant
+      canEnPassant: [false],
       blackKingMoved: false,
-      whiteKingMoved: false
+      whiteKingMoved: false,
+      // For training mode
+      freePlayMode: true,
+      openingMoveList: [],
     };
   }
 
@@ -376,13 +384,27 @@ class Game extends React.Component {
     squares[this.state.pieceLocation] = "empty"
     // If this move makes yourself checked, don't do it
     if(this.state.whiteIsMoving){
-      if (this.controlledBy("Black", this.state.whiteKingLocation, squares).length !== 0){
+      if (pieceCode === "WK"){
+        if (this.controlledBy("Black", i, squares).length !== 0){
+          // dont allow them to suicide their own king
+          this.returnToFirstClick()
+          return;
+        }
+      }
+      else if (this.controlledBy("Black", this.state.whiteKingLocation, squares).length !== 0){
         this.returnToFirstClick()
         return;
       }
     }
     else{
-      if (this.controlledBy("White", this.state.blackKingLocation, squares).length !== 0){
+      if (pieceCode === "BK"){
+        if (this.controlledBy("White", i, squares).length !== 0){
+          // dont allow them to suicide their own king
+          this.returnToFirstClick()
+          return;
+        }
+      }
+      else if (this.controlledBy("White", this.state.blackKingLocation, squares).length !== 0){
         this.returnToFirstClick()
         return;
       }
@@ -622,7 +644,6 @@ class Game extends React.Component {
 
     // First, check if it is on the same color piece. If so, return, because 
     // pieces cannot move on their own pieces
-    console.log("in second handle click")
     if (this.isWhitePiece(squares[i]) && this.state.whiteIsMoving)
     {
       this.returnToFirstClick();
@@ -1210,8 +1231,7 @@ class Game extends React.Component {
         }
         i++
       }
-      if (!isIn(i, moveList))
-      {
+      if (!isIn(i, moveList)){
         this.returnToFirstClick();
         return;
       }
@@ -1625,7 +1645,6 @@ class Game extends React.Component {
     i++
   }
   squares[kingLocation] = ownColor[0] + "K"
-  console.log(moveList)
   if (moveList.length != 0)
     return false;
   // So, check for blocks and captures
@@ -1663,89 +1682,105 @@ class Game extends React.Component {
   return true;
 }
 
-  render() {
-    const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
-    const moveHistory = this.state.moveHistory;
-    const history = this.state.history;
-    const current = history[this.state.stepNumber];
-    
-    let moves = history.map((step, move) => {
-      let desc = moveHistory[move]
+setMode(mode){
+  this.setState({freePlayMode: false})
+  let moveList = [];
+  switch(mode){
+    case "Free Play": {moveList = []; this.setState({freePlayMode: false})}
+    case "English": moveList = ["c4", "e5", "Nc3"]
+    case "Queen's Gambit": moveList = ["d4", "d5", "c4"]
+    case "Scotch": moveList = ["e4", "e5", "Nf3", "Nc6", "d4"]
+  }
+  this.setState({openingMoveList: moveList})
+  return;
+}
 
-      if (move === 0){
-        return <div><button className = "moves" onClick={() => this.jumpTo(move)}>Go to game start</button></div>
+render() {
+  const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
+  const moveHistory = this.state.moveHistory;
+  const history = this.state.history;
+  const current = history[this.state.stepNumber];
+  
+  let moves = history.map((step, move) => {
+    let desc = moveHistory[move]
+
+    if (move === 0){
+      return <div><button className = "moves" onClick={() => this.jumpTo(move)}>Go to game start</button></div>
+    }
+    else
+    {
+      let moveNum = Math.ceil(move / 2)
+      if (move % 2 === 1)
+      {
+        moveNum = moveNum + ". "
+        desc = moveNum + desc
+        if (typeof moveHistory[move + 1] != "string")
+          return <div><button className = "moves" onClick={() => this.jumpTo(move)}>{desc}</button></div>
       }
       else
       {
-        let moveNum = Math.ceil(move / 2)
-        if (move % 2 === 1)
-        {
-          moveNum = moveNum + ". "
-          desc = moveNum + desc
-          if (typeof moveHistory[move + 1] != "string")
-            return <div><button className = "moves" onClick={() => this.jumpTo(move)}>{desc}</button></div>
-        }
-        else
-        {
-          moveNum = moveNum + ". "
-          let desc1 = moveNum + moveHistory[move-1]
-          return (<div><button className = "moves" onClick={() => this.jumpTo(move - 1)}>{desc1}</button>
-          <button className = "moves" onClick={() => this.jumpTo(move)}>{desc}</button>
-          </div>)
-        }
+        moveNum = moveNum + ". "
+        let desc1 = moveNum + moveHistory[move-1]
+        return (<div><button className = "moves" onClick={() => this.jumpTo(move - 1)}>{desc1}</button>
+        <button className = "moves" onClick={() => this.jumpTo(move)}>{desc}</button>
+        </div>)
       }
-    });
+    }
+  });
 
-    let winner = false
-    let winnerColor = ""
+  let winner = false
+  let winnerColor = ""
+  if (inCheck.at(-1))
+    winner = this.calculateWinner(current.squares, this.state.whiteIsMoving)
+  let status;
+  if (winner) {
+    if (this.state.whiteIsMoving)
+      winnerColor = "Black"
+    else
+      winnerColor = "White"
+    status = "Winner: " + winnerColor;
+  } else {
+    status = (this.state.whiteIsMoving ? "White" : "Black") + " to move.";
     if (inCheck.at(-1))
-      winner = this.calculateWinner(current.squares, this.state.whiteIsMoving)
-    let status;
-    if (winner) {
-      if (this.state.whiteIsMoving)
-        winnerColor = "Black"
-      else
-        winnerColor = "White"
-      status = "Winner: " + winnerColor;
-    } else {
-      status = (this.state.whiteIsMoving ? "White" : "Black") + " to move.";
-      if (inCheck.at(-1))
-        status = "Check! " + status
+      status = "Check! " + status
+  }
+
+  let doOPENINGS = false
+  if (doOPENINGS){
+    let scotchPotterVariation = ["empty", "e4", "e5", "Nf3", "Nc6", "d4", "exd4", "Nxd4", "Bc5", "Nb3"]
+    if (moveHistory.at(this.state.stepNumber) !== scotchPotterVariation[this.state.stepNumber]){
+      status = "Incorrect! Return to a previous move to try again."
     }
+  }
 
-    let doOPENINGS = false
-    if (doOPENINGS){
-      let scotchPotterVariation = ["empty", "e4", "e5", "Nf3", "Nc6", "d4", "exd4", "Nxd4", "Bc5", "Nb3"]
-      if (moveHistory.at(this.state.stepNumber) !== scotchPotterVariation[this.state.stepNumber]){
-        status = "Incorrect! Return to a previous move to try again."
-      }
-    }
+  const flipBoard = <button className = "moves" onClick={() => this.setState({isBoardFlipped: !this.state.isBoardFlipped})}>
+    Flip Board</button>
 
-    const flipBoard = <button className = "moves" onClick={() => this.setState({isBoardFlipped: !this.state.isBoardFlipped})}>
-      Flip Board</button>
+  let search = [<input type="text" id="myInput" placeholder="Search for openings.."></input>]
+  const openingList = ["English", "Queen's Gambit", "Scotch"]
+  let openingButtonList = [];
+  for (let i = 0; i < openingList.length; i++){
+    openingButtonList.push(<li><button onClick ={() => this.setMode(openingList[i])}>{openingList[i]}</button></li>)
+  }
+  search.push(<ul id="myUL">{openingButtonList}</ul>)
 
-    let search = [<input type="text" id="myInput" placeholder="Search for openings.."></input>]
-    search.push(<ul id="myUL"><li><button>English</button></li>
-    <li><button>Queen's Gambit</button></li>
-    <li><button>Scotch</button></li></ul>)
-
-    return (
-      <div className="game">
-        <div className="game-board">
-          <Board squares={current.squares}
-            onClick={i => this.handleClick(i)}
-            selectedSquare= {this.state.pieceLocation}
-            isBoardFlipped = {this.state.isBoardFlipped} 
-          />
-        </div>
-        <div className="game-info" id = "game-info">
-          <div>{search}</div>
-          <div className = "status">{status}</div>
-          <div>{flipBoard}</div>
-          <div>{moves}</div>
-        </div> 
+  return (
+    <div className="game">
+      <div><div>Current Opening:</div>{search}</div>
+      <div className="game-board">
+        <Board squares={current.squares}
+          onClick={i => this.handleClick(i)}
+          selectedSquare= {this.state.pieceLocation}
+          isBoardFlipped = {this.state.isBoardFlipped} 
+        />
       </div>
-    );
+      <div className="game-info" id = "game-info">
+        <div className = "status">{status}</div>
+        <div>{flipBoard}</div>
+        <div>{moves}</div>
+      </div> 
+    </div>
+  );
   }
 }
 
