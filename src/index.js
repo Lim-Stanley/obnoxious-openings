@@ -78,19 +78,17 @@ import './index.css';
 // Yellow on dark square: #baca2b
 
 // tuba: king, violin: pawn, clarinet: knight, flute: bishop, trumpet: queen, bone: rook
-// Get special sounds for en passant, castling, and promotion
 
 /////////////////////////////////////////////////////////////
 //////////       TO DO LIST   ///////////////////////////////
 /////////////////////////////////////////////////////////////
 // Pawn promotion options
 // Drag and drop
-// Sound
 // Opening prep system
-// Implement history when promotion (d8 = Q)
-// Bug: cannot capture out of check, because rowOf returns an int
-//     make rowOf return a string, and make the few functions that do arithmetic with the output of rowOf turn the
-//     string back into an int
+//    Make search bar
+//    Find a way to load the game everytime the state is updated
+// Get special sounds for en passant, castling, and promotion
+// CAN'T CASTLE IF KING HAS ALREADY MOVED
 
 function Square(props) {
   let bgColor = ""
@@ -340,6 +338,8 @@ class Game extends React.Component {
       blackKingLocation: 4,
       whiteKingLocation: 60,
       isBoardFlipped: false,
+      blackKingMoved: false,
+      whiteKingMoved: false
     };
   }
 
@@ -435,11 +435,11 @@ class Game extends React.Component {
       }
     }
     else if (pieceCode === "WK"){
-      this.setState({whiteKingLocation: i})
+      this.setState({whiteKingLocation: i, whiteKingMoved: true})
       squares[i] = pieceCode;
     }
     else if (pieceCode === "BK"){
-      this.setState({blackKingLocation: i})
+      this.setState({blackKingLocation: i, blackKingMoved: true})
       squares[i] = pieceCode;
     }
     else
@@ -611,6 +611,7 @@ class Game extends React.Component {
 
     // First, check if it is on the same color piece. If so, return, because 
     // pieces cannot move on their own pieces
+    console.log("in second handle click")
     if (this.isWhitePiece(squares[i]) && this.state.whiteIsMoving)
     {
       this.returnToFirstClick();
@@ -1144,10 +1145,47 @@ class Game extends React.Component {
     // Makes a list of possible moves
     let moveList = this.KcontrolList(this.state.pieceLocation)
     console.log(moveList)
-    console.log(moveList)
+
+    // check for castling
+    if (movingColor) {
+      if (i === 58){
+        if (squares[57] === "empty" && squares[58] === "empty" && squares[59] === "empty" && squares[56] === "WR" && !this.state.whiteKingMoved &&
+        this.controlledBy("Black", 57, squares).length === 0 && this.controlledBy("Black", 58, squares).length === 0)
+        {
+          this.Update(i, "ooo")
+        }
+      }
+      else if (i === 62)
+      {
+        console.log("i'm in the short castling place")
+        if (squares[61] === "empty" && squares[62] === "empty" && squares[63] === "WR" && !this.state.whiteKingMoved &&
+        this.controlledBy("Black", 61, squares).length === 0 && this.controlledBy("Black", 62, squares).length === 0)
+        {
+          this.Update(i, "oo")
+        }
+      }
+    }
+    else
+    {
+      if (i === 2) // If queenside castling
+      {
+        if (squares[1] === "empty" && squares[2] === "empty" && squares[3] === "empty" && squares[0] === "BR" && !this.state.blackKingMoved 
+        && this.controlledBy("White", 2, squares).length === 0 && this.controlledBy("White", 3, squares).length === 0){
+          this.Update(i, "ooo")
+        }
+      }
+      else if (i === 6)
+      {
+        if (squares[5] === "empty" && squares[6] === "empty" && squares[7] === "BR" && squares[4] == "BK" && !this.state.blackKingMoved &&
+        this.controlledBy("White", 5, squares).length === 0 && this.controlledBy("White", 6, squares).length === 0){
+          this.Update(i, "oo")
+        }
+      }
+    }
+
     if (!isIn(i, moveList)) {this.returnToFirstClick(); return}
   
-    
+
     // If you can block OR capture the checking piece, make the move
     if (inCheck.at(-1)){
       let ownColor = "White"; let opponentColor = "Black"
@@ -1168,43 +1206,7 @@ class Game extends React.Component {
       }
     }
 
-    // Check for castling
-    if (movingColor) {
-      if (i === 58){
-        if (squares[57] === "empty" && squares[58] === "empty" && squares[59] === "empty" && squares[56] === "WR" &&
-        this.controlledBy("Black", 57, squares).length === 0 && this.controlledBy("Black", 58, squares).length === 0)
-        {
-          this.Update(i, "ooo")
-        }
-      }
-      else if (i === 62)
-      {
-        if (squares[61] === "empty" && squares[62] === "empty" && squares[63] === "WR" && 
-        this.controlledBy("Black", 61, squares).length === 0 && this.controlledBy("Black", 62, squares).length === 0)
-        {
-          this.Update(i, "oo")
-        }
-      }
-    }
-    else
-    {
-      if (i === 2) // If queenside castling
-      {
-        if (squares[1] === "empty" && squares[2] === "empty" && squares[3] === "empty" && squares[0] === "BR" &&
-          this.controlledBy("White", 2, squares).length === 0 && this.controlledBy("White", 3, squares).length === 0)
-        {
-          this.Update(i, "ooo")
-        }
-      }
-      else if (i === 6)
-      {
-        if (squares[5] === "empty" && squares[6] === "empty" && squares[7] === "BR" &&
-        this.controlledBy("White", 5, squares).length === 0 && this.controlledBy("White", 6, squares).length === 0)
-        {
-          this.Update(i, "oo")
-        }
-      }
-    }
+    // Make sure king doesn't suicide
     if (this.state.whiteIsMoving){
       if (this.controlledBy("Black", i, squares).length !== 0){
         this.returnToFirstClick()
@@ -1744,6 +1746,8 @@ class Game extends React.Component {
     const flipBoard = <button className = "moves" onClick={() => this.setState({isBoardFlipped: !this.state.isBoardFlipped})}>
       Flip Board</button>
 
+    let search = <input type="text" id="myInput" onkeyup="myFunction()" placeholder="search for names.."></input>
+
     return (
       <div className="game">
         <div className="game-board">
@@ -1754,6 +1758,7 @@ class Game extends React.Component {
           />
         </div>
         <div className="game-info" id = "game-info">
+          <div>{search}</div>
           <div className = "status">{status}</div>
           <div>{flipBoard}</div>
           <div>{moves}</div>
