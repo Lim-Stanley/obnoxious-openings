@@ -94,6 +94,10 @@ import './index.css';
 // Sound when you try to move when checked
 // Make search bar designed like chess.com search bar
 // Make box at top to show current selected opening
+// Make a random opening button
+// Play a sound when an opening is played incorrectly
+// Play a sound when an opening is played 100% accurately
+// Reset everytime a new opening is selected
 
 function Square(props) {
   let bgColor = ""
@@ -355,6 +359,7 @@ class Game extends React.Component {
       // For training mode
       freePlayMode: true,
       openingMoveList: [],
+      openingName: "Setting: Free Play",
     };
   }
 
@@ -368,6 +373,35 @@ class Game extends React.Component {
     for (let i = 8; i < 16; i++){tempArray[i] = "BP";}
     for (let i = 48; i < 56; i++){tempArray[i] = "WP";}
     return tempArray;
+  }
+
+  resetBoard(){
+    this.setState({
+      history: [{
+          squares: this.initializeBoard()
+      }],
+      moveHistory: ["empty"],
+      stepNumber: 0,
+      whiteIsMoving: true,
+      // For movement
+      clickNumber: 1,
+      movingPiece: null,
+      pieceLocation: null,
+      // For Checks
+      inCheck: [false],
+      blackKingLocation: 4,
+      whiteKingLocation: 60,
+      // For board flip mechanic
+      isBoardFlipped: false,
+      // For en passant
+      canEnPassant: [false],
+      blackKingMoved: false,
+      whiteKingMoved: false,
+      // For training mode
+      freePlayMode: true,
+      openingMoveList: [],
+      openingName: "Setting: Free Play",
+  })
   }
 
   Update(i, pieceCode) {
@@ -1683,15 +1717,18 @@ class Game extends React.Component {
 }
 
 setMode(mode){
+  this.resetBoard()
   this.setState({freePlayMode: false})
+  let openingName = "Current Opening: "
   let moveList = [];
   switch(mode){
     case "Free Play": {moveList = []; this.setState({freePlayMode: false})}
-    case "English": moveList = ["c4", "e5", "Nc3"]
-    case "Queen's Gambit": moveList = ["d4", "d5", "c4"]
-    case "Scotch": moveList = ["e4", "e5", "Nf3", "Nc6", "d4"]
+    case "English": {moveList = ["c4", "e5", "Nc3"]; break;}
+    case "Queen's Gambit": {moveList = ["d4", "d5", "c4"]; break;}
+    case "Scotch": {moveList = ["e4", "e5", "Nf3", "Nc6", "d4"]; break;}
   }
   this.setState({openingMoveList: moveList})
+  this.setState({openingName: openingName + mode})
   return;
 }
 
@@ -1744,18 +1781,11 @@ render() {
     if (inCheck.at(-1))
       status = "Check! " + status
   }
-
-  let doOPENINGS = false
-  if (doOPENINGS){
-    let scotchPotterVariation = ["empty", "e4", "e5", "Nf3", "Nc6", "d4", "exd4", "Nxd4", "Bc5", "Nb3"]
-    if (moveHistory.at(this.state.stepNumber) !== scotchPotterVariation[this.state.stepNumber]){
-      status = "Incorrect! Return to a previous move to try again."
-    }
-  }
-
+  // Creates flipboard button
   const flipBoard = <button className = "moves" onClick={() => this.setState({isBoardFlipped: !this.state.isBoardFlipped})}>
     Flip Board</button>
 
+  // Creates opening interface
   let search = [<input type="text" id="myInput" placeholder="Search for openings.."></input>]
   const openingList = ["English", "Queen's Gambit", "Scotch"]
   let openingButtonList = [];
@@ -1764,9 +1794,20 @@ render() {
   }
   search.push(<ul id="myUL">{openingButtonList}</ul>)
 
+  // Does opening checking
+  if (this.state.openingMoveList.length !== 0){
+    let openingMoves = ["empty"]; openingMoves = openingMoves.concat(this.state.openingMoveList)
+    if (moveHistory.at(this.state.stepNumber) !== openingMoves[this.state.stepNumber]){
+      status = "Incorrect! Return to a previous move to try again."
+    }
+    if (this.state.stepNumber + 1 === openingMoves.length && moveHistory.at(this.state.stepNumber) === openingMoves[this.state.stepNumber]){
+      status = "Opening played 100% accurately!"
+    }
+  }
+
   return (
     <div className="game">
-      <div><div>Current Opening:</div>{search}</div>
+      <div className = "opening-interface"><div className = "mode-status">{this.state.openingName}</div>{search}</div>
       <div className="game-board">
         <Board squares={current.squares}
           onClick={i => this.handleClick(i)}

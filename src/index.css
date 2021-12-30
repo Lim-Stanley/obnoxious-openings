@@ -14,14 +14,27 @@ body {
     display: table;
   }
   
+  /* increase both status and mode-status font-sizes when not debugging */
   .status {
-    font-size: 16px;
+    font-size: 14px;
     background-color: #272522;
     color: #a7a79f;
     text-align: center;
     border: #767676;
     border-width: thick;
     border-style: ridge;
+    margin-bottom: 10px;
+  }
+
+  .mode-status{
+    font-size: 14px;
+    background-color: #272522;
+    color: #a7a79f;
+    text-align: center;
+    border: #767676;
+    border-width: thick;
+    border-style: ridge;
+    min-width: 200px;
     margin-bottom: 10px;
   }
   
@@ -75,12 +88,17 @@ body {
     color: #a7a79f;
   }
 
+  .opening-interface{
+    margin-right: 20px;
+  }
+
+
   #myInput {
     /* background-image: url('/css/searchicon.png'); /* Add a search icon to input */
     background-position: 10px 12px; /* Position the search icon */
     background-repeat: no-repeat; /* Do not repeat the icon image */
     font: "Century Gothic", Futura, sans-serif;
-    font-size: 18px;
+    font-size: 14px;
     color: white;
     background-color: #272522;
     text-align: center;
