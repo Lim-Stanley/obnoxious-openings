@@ -88,18 +88,13 @@ import './index.css';
 /////////////////////////////////////////////////////////////
 // Pawn promotion options
 // Drag and drop
-// Opening prep system
-//    Find a way to load the game everytime the state is updated
 // Get special sound for promotion
 // Implement en passant for a specific square 
-// BUG: king cannot move out of check
 // Sound when you try to move when checked
 // Make search bar designed like chess.com search bar
-// Make box at top to show current selected opening
-// Make a random opening button
+// Make a random opening button ****
 // Play a sound when an opening is played incorrectly
 // Play a sound when an opening is played 100% accurately
-// Add a "free play" button
 
 function Square(props) {
   let bgColor = ""
@@ -335,7 +330,9 @@ makeSquareList(direction){
 }
 
 class Game extends React.Component {
-  constructor(props) {
+  /////////////////////////////////////////////////////////////////////////
+  // If you make a change in the constructor, must also change resetBoard()
+  constructor(props) { 
     super(props);
     this.state = {
       history: [{
@@ -362,6 +359,8 @@ class Game extends React.Component {
       freePlayMode: true,
       openingMoveList: [],
       openingName: "Setting: Free Play",
+      // For Promotion
+      promotionPiece: null,
     };
   }
 
@@ -374,12 +373,6 @@ class Game extends React.Component {
     tempArray[4] = "BK"; tempArray[60] = "WK";
     for (let i = 8; i < 16; i++){tempArray[i] = "BP";}
     for (let i = 48; i < 56; i++){tempArray[i] = "WP";}
-
-    tempArray[25] = "WN"
-    tempArray[52] = "WQ"
-    tempArray[18] = "BP"
-    tempArray[10] = "empty"
-
     return tempArray;
   }
 
@@ -409,6 +402,8 @@ class Game extends React.Component {
       freePlayMode: true,
       openingMoveList: [],
       openingName: "Setting: Free Play",
+      // Promotion
+      promotionPiece: null,
   })
   }
 
@@ -470,11 +465,11 @@ class Game extends React.Component {
         moveLabel = this.colOf(this.state.pieceLocation) + "x" + moveLabel
       // if it's a promotion, do the equals thing
       if ((i <8 && i >=0) || (i < 64 && i >= 56)){
-        moveLabel = moveLabel + "=Q"
+        moveLabel = moveLabel + "=" + this.state.promotionPiece
         if (this.state.whiteIsMoving)
-          pieceCode = "WQ"
+          pieceCode = "W" + this.state.promotionPiece
         else
-          pieceCode = "BQ"
+          pieceCode = "B" + this.state.promotionPiece
       }
     }
     else if (squares[i] != "empty")
@@ -567,6 +562,7 @@ class Game extends React.Component {
       clickNumber: 1,
       movingPiece: null,
       pieceLocation: null,
+      promotionPiece: null,
     });
 
     return;
@@ -1329,7 +1325,7 @@ class Game extends React.Component {
     return moveList
   }
 
-  PmoveProcess(i)
+  async PmoveProcess(i)
   {
     const canEnPassant = this.state.canEnPassant.slice(0, this.state.stepNumber + 1);
     const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
@@ -1389,7 +1385,7 @@ class Game extends React.Component {
           else {this.returnToFirstClick(); return}
         }
         if (i >= 0 && i < 8){
-          this.choosePromotion(i, this.state.whiteIsMoving)
+          await this.choosePromotion(i, this.state.whiteIsMoving)
           this.Update(i, "WP")
         }
         else
@@ -1409,8 +1405,10 @@ class Game extends React.Component {
           }
           else {this.returnToFirstClick(); return}
         }
-        if (i >= 56 && i < 64)
+        if (i >= 56 && i < 64){
+          await this.choosePromotion(i, this.state.whiteIsMoving)
           this.Update(i, "BP")
+        }
         else
           this.Update(i, "BP")
         this.returnToFirstClick()
@@ -1421,10 +1419,12 @@ class Game extends React.Component {
     // this means the click was a capture or en passant
     if (squares[i] != "empty" && movingColor){
       if (inCheck.at(-1) && i !== checkingPiece) {return}
-      if (i >= 0 && i < 8)
-          this.Update(i, "WQ")
-        else
-          this.Update(i, "WP")
+      if (i >= 0 && i < 8){
+        await this.choosePromotion(i, this.state.whiteIsMoving)
+        this.Update(i, "WP")
+      }
+      else
+        this.Update(i, "WP")
       this.returnToFirstClick()
     }
     else if (canEnPassant.at(-1) && movingColor){
@@ -1447,10 +1447,12 @@ class Game extends React.Component {
     }
     else if (squares[i] != "empty" && movingColor === false){
       if (inCheck.at(-1) && i !== checkingPiece) {return}
-      if (i >= 56 && i < 64)
-          this.Update(i, "BQ")
-        else
-          this.Update(i, "BP")
+      if (i >= 56 && i < 64){
+        await this.choosePromotion(i, this.state.whiteIsMoving)
+        this.Update(i, "BP")
+      }
+      else
+        this.Update(i, "BP")
       this.returnToFirstClick()
       return;
     }
@@ -1530,8 +1532,73 @@ class Game extends React.Component {
   }
 
   // given a promotion square and color (as a bool), load 4 squares, each with one possible promotion piece: Queen, rook, bishop, knight.
-  // Depending on what is chosen, return the pieceCode of the piece
-  choosePromotion(i, color){
+  // Depending on what is chosen, change this.state.promotionPiece accordingly, and return
+  async choosePromotion(i, color){
+    // Render the squares
+    console.log("in choose promotion")
+    ReactDOM.render(this.PromotionSquares(i, color), document.getElementById("promotion"))
+
+    // Now, wait until one of the squares gets clicked. Then, set this.state.promotionPiece accordingly
+    console.log("this.state.promotionPiece is " + this.state.promotionPiece + " right before the first getpromotionpiece is called")
+    let promotionPiece = await this.getPromotionPiece();
+    while(promotionPiece === "not resolved"){
+      promotionPiece = await this.getPromotionPiece();
+    }
+    // Unrender the squares
+    ReactDOM.unmountComponentAtNode(document.getElementById("promotion"))
+    console.log("choosePromotion is done. promotion piece is " + this.state.promotionPiece)
+  }
+
+  PromotionSquares(i, color){
+    let bgColor = ""
+    let borderColor = ""
+    if (isLightSquare(i)){
+      {bgColor = "#eeeed2"; borderColor = "#769656"}}
+    else{
+      {bgColor = "#769656"; borderColor = "#eeeed2"}}
+    let pieceColor= "W"
+    if (!color) {pieceColor = "B"}
+    let buttonList = [];
+    let pieceList = ["Q", "R", "B", "N"]
+    buttonList.push(<div><Button onClick={() => this.setPromotionPiece(pieceList[0])} style={{backgroundColor: bgColor,alignItems: 'center',borderRadius: 0,border: '2px solid' + borderColor,width: '80px', height: '80px',
+    borderTop: '4px', borderLeft: '4px',}}>
+      {pieceImage(pieceColor + pieceList[0])}
+    </Button><Button onClick={() => this.setPromotionPiece(pieceList[1])} style={{backgroundColor: bgColor,alignItems: 'center',borderRadius: 0,border: '2px solid' + borderColor,width: '80px', height: '80px',
+    borderTop: '4px', borderRight: '4px',
+    }}>
+      {pieceImage(pieceColor + pieceList[1])}
+    </Button></div>
+    )
+    buttonList.push(<div><Button onClick={() => this.setPromotionPiece(pieceList[2])} style={{backgroundColor: bgColor,alignItems: 'center',borderRadius: 0,border: '2px solid' + borderColor,width: '80px', height: '80px',
+    borderBottom: '4px', borderLeft: '4px',}}>
+      {pieceImage(pieceColor + pieceList[2])}
+    </Button><Button onClick={() => this.setPromotionPiece(pieceList[3])} style={{backgroundColor: bgColor,alignItems: 'center',borderRadius: 0,border: '2px solid' + borderColor,width: '80px', height: '80px',
+    borderBottom: '4px', borderRight: '4px',
+    }}>
+      {pieceImage(pieceColor + pieceList[3])}
+    </Button></div>
+    )
+    return (buttonList)
+  }
+
+
+  getPromotionPiece(){
+    return new Promise(resolve => {
+      if (this.state.promotionPiece === null){
+        setTimeout(() => {
+          resolve("not resolved");
+        }, 100);
+      }else{
+        setTimeout(() => {
+          resolve("resolved");
+        }, 100);
+      }
+    });
+  }
+
+  // Given a pieceCode (Q, R, B, N), set the this.state.promotionPiece as that
+  setPromotionPiece(pieceCode){
+    this.setState({promotionPiece: pieceCode})
   }
   
   //  A function that, given two piece locations, a color, and a row, column, or diagonal, 
@@ -1849,7 +1916,7 @@ render() {
       status = "Check! " + status
   }
   // Creates flipboard button
-  const flipBoard = <button className = "moves" onClick={() => this.setState({isBoardFlipped: !this.state.isBoardFlipped})}>
+  const flipBoard = <button className = "moves" id = "flipboard" onClick={() => this.setState({isBoardFlipped: !this.state.isBoardFlipped})}>
     Flip Board</button>
 
   // Creates opening interface
@@ -1891,6 +1958,7 @@ render() {
       </div>
       <div className="game-info" id = "game-info">
         <div className = "status">{status}</div>
+        <div id = "promotion"></div>
         <div>{flipBoard}</div>
         <div>{moves}</div>
       </div> 
