@@ -1722,17 +1722,26 @@ class Game extends React.Component {
     } else{
       // If the piece can capture without putting its own king in check, return false
       // Else, return true, because it's checkmate!
+      let tempDelete = squares[controllingPieces[0]] // piece at capture location
+      let tempDelete2 = squares[this.controlledBy(ownColor, controllingPieces[0], squares)[0]] // piece at capturing location
+      let tempDelete3 = this.controlledBy(ownColor, controllingPieces[0], squares)[0] // captrue location
+      squares[controllingPieces[0]] = squares[this.controlledBy(ownColor, controllingPieces[0], squares)[0]] // Capture location is the capturing piece
       squares[this.controlledBy(ownColor, controllingPieces[0], squares)[0]] = "empty"
       if(this.state.whiteIsMoving){
         if (this.controlledBy("Black", this.state.whiteKingLocation, squares).length !== 0){
+          squares[controllingPieces[0]] = tempDelete // Capture location is returned
+          squares[tempDelete3] = tempDelete2
           return true;
         }
       }
       else{
         if (this.controlledBy("White", this.state.blackKingLocation, squares).length !== 0){
+          squares[controllingPieces[0]] = tempDelete // Capture location is returned
+          squares[tempDelete3] = tempDelete2
           return true;
         }
       }
+
       return false;
     }
   
