@@ -79,7 +79,9 @@ import './index.css';
 // Yellow on light square: #f6f669
 // Yellow on dark square: #baca2b
 
-// tuba: king, violin: pawn, clarinet: knight, flute: bishop, trumpet: queen, bone: rook
+// TO ADD A NEW OPENING:
+//  - Update the list openingList
+//  - Update the function setMode
 
 /////////////////////////////////////////////////////////////
 //////////       TO DO LIST   ///////////////////////////////
@@ -97,7 +99,7 @@ import './index.css';
 // Make a random opening button
 // Play a sound when an opening is played incorrectly
 // Play a sound when an opening is played 100% accurately
-// Reset everytime a new opening is selected
+// Add a "free play" button
 
 function Square(props) {
   let bgColor = ""
@@ -564,7 +566,7 @@ class Game extends React.Component {
     return;
   }
 
-  // Given a side (white/black) and a square i, returns a list of all piece locations that control that square
+  // Given a side (white/black) and a square i, returns a list of all piece locations of that side that control that square
   controlledBy(side, i, squares){
     let color = side[0]
     let colorBool = false
@@ -583,13 +585,13 @@ class Game extends React.Component {
           controlList = controlList.concat(this.PcontrolList(n, colorBool))
           break;
         case 'R':
-          controlList = controlList.concat(this.RcontrolList(n, colorBool, squares))
+          controlList = controlList.concat(this.RcontrolList(n, colorBool, squares, true))
           break;
         case 'B':
-          controlList = controlList.concat(this.BcontrolList(n, colorBool, squares))
+          controlList = controlList.concat(this.BcontrolList(n, colorBool, squares, true))
           break;
         case 'Q':
-          controlList = controlList.concat(this.QcontrolList(n, colorBool, squares))
+          controlList = controlList.concat(this.QcontrolList(n, colorBool, squares, true))
           break;
         case 'K':
           controlList = controlList.concat(this.KcontrolList(n))
@@ -601,6 +603,7 @@ class Game extends React.Component {
       for (let h = 0; h < controlList.length; h++){
         if (controlList[h] === i){
           controllingList.push(n)
+          console.log("pushing " + n)
           break;
         }
       }
@@ -764,7 +767,7 @@ class Game extends React.Component {
     let movingColor = this.state.whiteIsMoving
     // movingColor is true if it is white, and false if it is black
     
-    let moveList = this.RcontrolList(this.state.pieceLocation, movingColor, squares)
+    let moveList = this.RcontrolList(this.state.pieceLocation, movingColor, squares, false)
     if (!isIn(i, moveList)) {this.returnToFirstClick(); return}
 
     // If you can block OR capture the checking piece, make the move
@@ -792,7 +795,7 @@ class Game extends React.Component {
   }
 
   // make a list of all possible rook moves at a given pieceLocation
-  RcontrolList(i, movingColor, squares)
+  RcontrolList(i, movingColor, squares, calculatingWinner)
   {
     let moveList = []
     // Going up
@@ -809,8 +812,10 @@ class Game extends React.Component {
         continue;
       }
       // if own piece
-      else if (this.isWhitePiece(squares[i - (n*8)]) === movingColor)
+      else if (this.isWhitePiece(squares[i - (n*8)]) === movingColor){
+        if (calculatingWinner) {moveList.push(i - (n*8))}
         break;
+      }
       // if opponent piece
       else
       {
@@ -833,8 +838,10 @@ class Game extends React.Component {
         continue;
       }
       // if own piece
-      else if (this.isWhitePiece(squares[i + (n*8)]) === movingColor)
+      else if (this.isWhitePiece(squares[i + (n*8)]) === movingColor){
+        if (calculatingWinner) {moveList.push(i + (n*8))}
         break;
+      }
       // if opponent piece
       else
       {
@@ -857,8 +864,10 @@ class Game extends React.Component {
         continue;
       }
       // if own piece
-      else if (this.isWhitePiece(squares[i - (n)]) === movingColor)
+      else if (this.isWhitePiece(squares[i - (n)]) === movingColor){
+        if (calculatingWinner) {moveList.push(i - (n))}
         break;
+      }
       // if black piece
       else
       {
@@ -880,8 +889,10 @@ class Game extends React.Component {
         continue;
       }
       // if white piece
-      else if (this.isWhitePiece(squares[i + (n)]) === movingColor)
+      else if (this.isWhitePiece(squares[i + (n)]) === movingColor){
+        if (calculatingWinner) {moveList.push(i + (n))}
         break;
+      }
       // if black piece
       else
       {
@@ -1006,7 +1017,7 @@ class Game extends React.Component {
     let movingColor = this.state.whiteIsMoving
     // movingColor is true if it is white, and false if it is black
 
-    let moveList = this.BcontrolList(this.state.pieceLocation, movingColor, squares)
+    let moveList = this.BcontrolList(this.state.pieceLocation, movingColor, squares, false)
     // make a list of all possible bishop moves at a given pieceLocation
     
     console.log(moveList)
@@ -1036,7 +1047,7 @@ class Game extends React.Component {
     return;
   }
 
-  BcontrolList(i, movingColor, squares)
+  BcontrolList(i, movingColor, squares, calculatingWinner)
   {
     let moveList = []
     // Going up-left
@@ -1053,8 +1064,10 @@ class Game extends React.Component {
         continue;
       }
       // if own color
-      else if (this.isWhitePiece(squares[i - (n*9)]) === movingColor)
+      else if (this.isWhitePiece(squares[i - (n*9)]) === movingColor){
+        if (calculatingWinner) {moveList.push(i - (n*9))}
         break;
+      }
       // if opponent color
       else
       {
@@ -1077,8 +1090,10 @@ class Game extends React.Component {
         continue;
       }
       // if own color
-      else if (this.isWhitePiece(squares[i + (n*9)]) === movingColor)
+      else if (this.isWhitePiece(squares[i + (n*9)]) === movingColor){
+        if (calculatingWinner) {moveList.push(i + (n*9))}
         break;
+      }
       // if other color
       else
       {
@@ -1101,8 +1116,10 @@ class Game extends React.Component {
         continue;
       }
       // if own color
-      else if (this.isWhitePiece(squares[i - (n*7)]) === movingColor)
+      else if (this.isWhitePiece(squares[i - (n*7)]) === movingColor){
+        if (calculatingWinner) {moveList.push(i - (n*7))}
         break;
+      }
       // if empty color
       else
       {
@@ -1124,11 +1141,12 @@ class Game extends React.Component {
         continue;
       }
       // if own color
-      else if (this.isWhitePiece(squares[i + (n*7)]) === movingColor)
+      else if (this.isWhitePiece(squares[i + (n*7)]) === movingColor){
+        if (calculatingWinner) {moveList.push(i + (n*7))}
         break;
+      }
       // if opponent color
-      else
-      {
+      else{
         moveList.push(i + (n*7))
         break;
       }
@@ -1160,7 +1178,7 @@ class Game extends React.Component {
     let movingColor = this.state.whiteIsMoving
     // movingColor is true if it is white, and false if it is black
 
-    let moveList = this.QcontrolList(this.state.pieceLocation, movingColor, squares)
+    let moveList = this.QcontrolList(this.state.pieceLocation, movingColor, squares, false)
     // make a list of all possible Queen moves at a given pieceLocation
     console.log(moveList)
     
@@ -1190,11 +1208,11 @@ class Game extends React.Component {
     return;
   }
 
-  QcontrolList(i, movingColor, squares)
+  QcontrolList(i, movingColor, squares, calculatingWinner)
   {
     let tempList = []
-    tempList = tempList.concat(this.BcontrolList(i, movingColor, squares))
-    tempList = tempList.concat(this.RcontrolList(i, movingColor, squares))
+    tempList = tempList.concat(this.BcontrolList(i, movingColor, squares, calculatingWinner))
+    tempList = tempList.concat(this.RcontrolList(i, movingColor, squares, calculatingWinner))
     return tempList
   }
 
@@ -1568,13 +1586,13 @@ class Game extends React.Component {
           controlList = controlList.concat(this.PmoveList(n, this.state.whiteIsMoving))
           break;
         case 'R':
-          controlList = controlList.concat(this.RcontrolList(n, this.state.whiteIsMoving, squares))
+          controlList = controlList.concat(this.RcontrolList(n, this.state.whiteIsMoving, squares, false))
           break;
         case 'B':
-          controlList = controlList.concat(this.BcontrolList(n, this.state.whiteIsMoving, squares))
+          controlList = controlList.concat(this.BcontrolList(n, this.state.whiteIsMoving, squares, false))
           break;
         case 'Q':
-          controlList = controlList.concat(this.QcontrolList(n, this.state.whiteIsMoving, squares))
+          controlList = controlList.concat(this.QcontrolList(n, this.state.whiteIsMoving, squares, false))
           break;
         case 'N':
           controlList = controlList.concat(this.NcontrolList(n))
@@ -1658,8 +1676,7 @@ class Game extends React.Component {
     ownColor = "White"
     opponentColor = "Black"
   }
-  else
-  {
+  else{
     kingLocation = this.state.blackKingLocation
     moveList = moveList.concat(this.KcontrolList(this.state.blackKingLocation))
     ownColor = "Black"
@@ -1669,8 +1686,7 @@ class Game extends React.Component {
   // For each square, check if it's own piece is there OR if it is controlled by an opponent piece
   //   if it is, remove it from the list, because the king cannot move there
   // If the list is not empty, return false, because the king can move and therefore there is no winner
-  for (let i = 0; i < moveList.length;)
-  {
+  for (let i = 0; i < moveList.length;){
     if (squares[moveList[i]][0] === ownColor[0] || this.controlledBy(opponentColor, moveList[i], squares).length !== 0)
     {
       moveList.splice(i, 1)
@@ -1690,8 +1706,16 @@ class Game extends React.Component {
   
   // If not, see if the checking piece can be captured
   //    If it can be captured, then return false, because movingColor still has a possible move
+  //    If the checking piece can only be captured by the king, return true, because there is no way of blocking the line of sight
+  //    If the checking piece is right next to the king
   if (this.controlledBy(ownColor, controllingPieces[0], squares).length !== 0)
-    return false;
+    if ((this.controlledBy(ownColor, controllingPieces[0], squares).length === 1 && 
+    (this.controlledBy(ownColor, controllingPieces[0], squares)[0] == this.state.blackKingLocation || 
+    this.controlledBy(ownColor, controllingPieces[0], squares)[0] == this.state.whiteKingLocation))){
+      return true;
+    } else{
+      return false;
+    }
 
   // Now, we know that the checking piece cannot be captured. If the checking piece is a pawn or knight, they win!
   if (squares[controllingPieces[0]][1] === "N" || squares[controllingPieces[0]][1] === "P")
@@ -1717,15 +1741,30 @@ class Game extends React.Component {
 }
 
 setMode(mode){
-  this.resetBoard()
+  console.log(this.state.freePlayMode)
+  if (mode === "Free play" && !this.state.freePlayMode) {this.resetBoard(); return;}
+  else if (mode === "Free play") {return;}
   this.setState({freePlayMode: false})
   let openingName = "Current Opening: "
+  if (openingName + mode === this.state.openingName) {return;}
+  this.resetBoard();
   let moveList = [];
   switch(mode){
-    case "Free Play": {moveList = []; this.setState({freePlayMode: false})}
+    case "Advanced Caro-Kann": {moveList = ["e4", "c6", "d4", "d5", "e5", "Bf5", ]; break;}
+    case "Caro-Kann": {moveList = ["e4", "c6", "d4", "d5"]; break;}
     case "English": {moveList = ["c4", "e5", "Nc3"]; break;}
+    case "French Defense": {moveList = ["e4", "e6", "d4", "e5", "Nc3"]; break;}
+    case "Italian Game: Giuoco Pianissimo": {moveList = ["e4", "e5", "Nf3", "Nc6", "Bc4", "Bc5", "d3"]; break;}
+    case "Italian Game: Giuoco Piano": {moveList = ["e4", "e5", "Nf3", "Nc6", "Bc4", "Bc5"]; break;}
+    case "King's Gambit": {moveList = ["e4", "e5", "f4"]; break;}
+    case "Petrov's Defense": {moveList = ["e4", "e5", "Nf3", "Nf6", "Nxe5", "d6", "Nf3", "Nxe4", "d4"];  break;}
     case "Queen's Gambit": {moveList = ["d4", "d5", "c4"]; break;}
+    case "Ruy Lopez": {moveList = ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "Nf6", "O-O"]; break;}
     case "Scotch": {moveList = ["e4", "e5", "Nf3", "Nc6", "d4"]; break;}
+    case "Sicilian Defense": {moveList = ["e4", "c5", "Nf3", "Nc6"]; break;}
+    case "Sicilian Defense: Alapin Variation": {moveList = ["e4", "c5", "c3", "Nc6", "d4"]; break;}
+    case "Stafford Gambit": {moveList = ["e4", "e5", "Nf3", "Nf6", "Nxe5", "Nc6", "Nxc6", "dxc6"]; break;}
+    case "The London System": {moveList = ["d4", "d5", "Bf4", "Nf6", "e3"]; break;}
   }
   this.setState({openingMoveList: moveList})
   this.setState({openingName: openingName + mode})
@@ -1787,10 +1826,14 @@ render() {
 
   // Creates opening interface
   let search = [<input type="text" id="myInput" placeholder="Search for openings.."></input>]
-  const openingList = ["English", "Queen's Gambit", "Scotch"]
+  const openingList = ["Advanced Caro-Kann", "Caro-Kann", "English", "French Defense", "Italian Game: Giuoco Piano", 
+  "Italian Game: Giuoco Pianissimo", "King's Gambit", 
+  "Petrov's Defense", "Queen's Gambit", "Ruy Lopez", "Scotch", 
+  "Sicilian Defense", "Sicilian Defense: Alapin Variation",
+    "Stafford Gambit", "The London System"]
   let openingButtonList = [];
   for (let i = 0; i < openingList.length; i++){
-    openingButtonList.push(<li><button onClick ={() => this.setMode(openingList[i])}>{openingList[i]}</button></li>)
+    openingButtonList.push(<li><button className = "moves" onClick ={() => this.setMode(openingList[i])}>{openingList[i]}</button></li>)
   }
   search.push(<ul id="myUL">{openingButtonList}</ul>)
 
@@ -1804,10 +1847,13 @@ render() {
       status = "Opening played 100% accurately!"
     }
   }
-
   return (
     <div className="game">
-      <div className = "opening-interface"><div className = "mode-status">{this.state.openingName}</div>{search}</div>
+      <div className = "opening-interface">
+        <div className = "mode-status">{this.state.openingName}</div>
+        <div><button className = "moves" onClick={() => this.setMode("Free play")}>Return to free play</button></div>
+        {search}
+      </div>
       <div className="game-board">
         <Board squares={current.squares}
           onClick={i => this.handleClick(i)}

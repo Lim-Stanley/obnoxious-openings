@@ -34,7 +34,7 @@ body {
     border: #767676;
     border-width: thick;
     border-style: ridge;
-    min-width: 200px;
+    width: 200px;
     margin-bottom: 10px;
   }
   
@@ -105,6 +105,8 @@ body {
     border: #767676;
     border-width: thick;
     border-style: ridge;
+    margin-top: 5px;
+    margin-bottom: 5px;
   }
 
   #myUL {
