@@ -374,6 +374,12 @@ class Game extends React.Component {
     tempArray[4] = "BK"; tempArray[60] = "WK";
     for (let i = 8; i < 16; i++){tempArray[i] = "BP";}
     for (let i = 48; i < 56; i++){tempArray[i] = "WP";}
+
+    tempArray[25] = "WN"
+    tempArray[52] = "WQ"
+    tempArray[18] = "BP"
+    tempArray[10] = "empty"
+
     return tempArray;
   }
 
@@ -603,7 +609,6 @@ class Game extends React.Component {
       for (let h = 0; h < controlList.length; h++){
         if (controlList[h] === i){
           controllingList.push(n)
-          console.log("pushing " + n)
           break;
         }
       }
@@ -1704,6 +1709,7 @@ class Game extends React.Component {
   if (controllingPieces.length > 1)
     return true;
   
+  console.log("getting to 1706")
   // If not, see if the checking piece can be captured
   //    If it can be captured, then return false, because movingColor still has a possible move
   //    If the checking piece can only be captured by the king, return true, because there is no way of blocking the line of sight
@@ -1714,9 +1720,22 @@ class Game extends React.Component {
     this.controlledBy(ownColor, controllingPieces[0], squares)[0] == this.state.whiteKingLocation))){
       return true;
     } else{
+      // If the piece can capture without putting its own king in check, return false
+      // Else, return true, because it's checkmate!
+      squares[this.controlledBy(ownColor, controllingPieces[0], squares)[0]] = "empty"
+      if(this.state.whiteIsMoving){
+        if (this.controlledBy("Black", this.state.whiteKingLocation, squares).length !== 0){
+          return true;
+        }
+      }
+      else{
+        if (this.controlledBy("White", this.state.blackKingLocation, squares).length !== 0){
+          return true;
+        }
+      }
       return false;
     }
-
+  
   // Now, we know that the checking piece cannot be captured. If the checking piece is a pawn or knight, they win!
   if (squares[controllingPieces[0]][1] === "N" || squares[controllingPieces[0]][1] === "P")
     return true;
