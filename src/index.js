@@ -88,7 +88,6 @@ import './index.css';
 /////////////////////////////////////////////////////////////
 // Drag and drop
 // Get special sound for promotion
-// Implement en passant for a specific square 
 // Sound when you try to move when checked
 // Make search bar designed like chess.com search bar
 // Make a random opening button
@@ -1843,13 +1842,12 @@ class Game extends React.Component {
 }
 
 setMode(mode){
-  console.log(this.state.freePlayMode)
   if (mode === "Free play" && !this.state.freePlayMode) {this.resetBoard(); return;}
   else if (mode === "Free play") {return;}
-  this.setState({freePlayMode: false})
   let openingName = "Current Opening: "
   if (openingName + mode === this.state.openingName) {return;}
   this.resetBoard();
+  this.setState({freePlayMode: false})
   let moveList = [];
   switch(mode){
     case "Advanced Caro-Kann": {moveList = ["e4", "c6", "d4", "d5", "e5", "Bf5", ]; break;}
@@ -1974,8 +1972,7 @@ render() {
   }
 }
 
-function myFunction() {
-  console.log("in myFunction")
+function searchProcess() {
   // Declare variables
   var input, filter, ul, li, a, i, txtValue;
   input = document.getElementById('myInput');
@@ -2000,4 +1997,4 @@ function myFunction() {
 
 ReactDOM.render(<Game />, document.getElementById("root"));
 const searchBar = document.getElementById("myInput")
-searchBar.onkeyup = function() {myFunction()}
+searchBar.onkeyup = function() {searchProcess()}

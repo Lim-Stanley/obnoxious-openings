@@ -94,17 +94,14 @@ body {
 
 
   #myInput {
-    /* background-image: url('/css/searchicon.png'); /* Add a search icon to input */
-    background-position: 10px 12px; /* Position the search icon */
-    background-repeat: no-repeat; /* Do not repeat the icon image */
     font: "Century Gothic", Futura, sans-serif;
     font-size: 14px;
-    color: white;
-    background-color: #272522;
-    text-align: center;
-    border: #767676;
-    border-width: thick;
-    border-style: ridge;
+    color: #838281;
+    background-color: #3d3b39;
+    border-radius: 5px;
+    width: 200px;
+    height: 20px;
+    text-align: left;
     margin-top: 5px;
     margin-bottom: 5px;
   }
