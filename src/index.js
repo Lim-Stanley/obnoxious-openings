@@ -86,13 +86,12 @@ import './index.css';
 /////////////////////////////////////////////////////////////
 //////////       TO DO LIST   ///////////////////////////////
 /////////////////////////////////////////////////////////////
-// Pawn promotion options
 // Drag and drop
 // Get special sound for promotion
 // Implement en passant for a specific square 
 // Sound when you try to move when checked
 // Make search bar designed like chess.com search bar
-// Make a random opening button ****
+// Make a random opening button
 // Play a sound when an opening is played incorrectly
 // Play a sound when an opening is played 100% accurately
 
@@ -353,6 +352,8 @@ class Game extends React.Component {
       isBoardFlipped: false,
       // For en passant
       canEnPassant: [false],
+      enPassantSquare: [null],
+      // For castling
       blackKingMoved: false,
       whiteKingMoved: false,
       // For training mode
@@ -408,6 +409,7 @@ class Game extends React.Component {
   }
 
   Update(i, pieceCode) {
+    const enPassantSquare = this.state.enPassantSquare.slice(0, this.state.stepNumber + 1);
     const canEnPassant = this.state.canEnPassant.slice(0, this.state.stepNumber + 1);
     const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
     const moveHistory = this.state.moveHistory.slice(0, this.state.stepNumber + 1);
@@ -542,11 +544,14 @@ class Game extends React.Component {
 
     let pLocation = this.state.pieceLocation
     let enPassantBool = false;
+    let ePSquare = null;
     // Checking if en passant is possible
     if ((pieceCode === "WP" || pieceCode === "BP") && 
       ((pLocation < 56 && pLocation >=48) || (pLocation < 16 && pLocation >= 8)) &&
-      ((i<32 && i>=24) || (i <40 && i >= 32))) // If en passant happened
+      ((i<32 && i>=24) || (i <40 && i >= 32))) {// If a pawn has just moved 2 squares
       enPassantBool = true;
+      ePSquare = i;
+      }
 
     this.setState({
       history: history.concat([
@@ -557,6 +562,7 @@ class Game extends React.Component {
       moveHistory: moveHistory.concat([moveLabel]),
       inCheck: inCheck.concat([inCheckBool]),
       canEnPassant: canEnPassant.concat([enPassantBool]),
+      enPassantSquare: enPassantSquare.concat([ePSquare]),
       stepNumber: history.length,
       whiteIsMoving: !this.state.whiteIsMoving,
       clickNumber: 1,
@@ -1327,6 +1333,7 @@ class Game extends React.Component {
 
   async PmoveProcess(i)
   {
+    const enPassantSquare = this.state.enPassantSquare.slice(0, this.state.stepNumber + 1)
     const canEnPassant = this.state.canEnPassant.slice(0, this.state.stepNumber + 1);
     const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
@@ -1439,11 +1446,11 @@ class Game extends React.Component {
         }
         else {this.returnToFirstClick(); return}
       }
-      if (i < 24 && i >= 16 && squares[i + 8] === "BP"){
+      if (i < 24 && i >= 16 && squares[i + 8] === "BP" && enPassantSquare.at(-1) === (i + 8)){
         this.Update(i, "WPe")
         this.returnToFirstClick()
         return;
-      }
+      } else {this.returnToFirstClick(); return}
     }
     else if (squares[i] != "empty" && movingColor === false){
       if (inCheck.at(-1) && i !== checkingPiece) {return}
@@ -1466,11 +1473,11 @@ class Game extends React.Component {
         }
         else {this.returnToFirstClick(); return}
       }
-      if (i < 48 && i >= 40 && squares[i - 8] === "WP"){
+      if (i < 48 && i >= 40 && squares[i - 8] === "WP" && enPassantSquare.at(-1) === (i - 8)){
         this.Update(i, "BPe")
         this.returnToFirstClick()
         return;
-      }
+      } else {this.returnToFirstClick(); return}
     }
     else{
       // no piece to capture and no en passant
