@@ -9,8 +9,8 @@ To run the app, run:
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
 ## Organization
-'index.html' is where the body is loaded
-'src/' contains all the processes for the chess game
+`index.html` is where the body is loaded
+`src/` contains all the processes for the chess game
 ### src/index.js
 
 This is where the mechanics of the game are programmed. 
