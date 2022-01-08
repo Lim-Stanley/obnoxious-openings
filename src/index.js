@@ -1,19 +1,7 @@
 import Button from '@mui/material/Button';
 
-import BR from './Chess_Pieces/Black Rook.png'
-import BN from './Chess_Pieces/Black Knight.png'
-import BB from './Chess_Pieces/Black Bishop.png'
-import BQ from './Chess_Pieces/Black Queen.png'
-import BK from './Chess_Pieces/Black King.png'
-import BP from './Chess_Pieces/Black Pawn.png'
-
-import WR from './Chess_Pieces/White Rook.png'
-import WN from './Chess_Pieces/White Knight.png'
-import WB from './Chess_Pieces/White Bishop.png'
-import WQ from './Chess_Pieces/White Queen.png'
-import WK from './Chess_Pieces/White King.png'
+import {pieceImageList} from './piece-imports'
 import WP from './Chess_Pieces/White Pawn.png'
-
 import enPassantSound from './Piece Sounds/En passant.mp3'
 
 import clarinetC1 from './Piece Sounds/clarinet/clarinet_C4.mp3'
@@ -73,7 +61,7 @@ import violinC2 from './Piece Sounds/violin/violin_C6.mp3'
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-
+console.log(pieceImageList)
 // GREEN COLOR: #769656
 // CREAM COLOR: #eeeed2
 // Yellow on light square: #f6f669
@@ -96,6 +84,9 @@ import './index.css';
 // Possibly find a way to integrate stockfish
 // Code a "make new opening" function?
 //    Get to create a new one, name it, and then play it out, then it saves into the code. I don't know if this is possible at all.
+// Make import files
+// Use datastructure for setting audio = imports
+
 
 function Square(props) {
   let bgColor = ""
@@ -126,21 +117,11 @@ function isLightSquare(i){
 
 // Given a piece code (BB, WW, etc...) return the image associated with that piece
 function pieceImage(pieceCode){
-  if (pieceCode === "BR") {return <img src = {BR}  alt = "Black Rook" />}
-  else if (pieceCode === "BN") {return <img src = {BN}  alt = "Black Knight" />}
-  else if (pieceCode === "BB") {return <img src = {BB}  alt = "Black Bishop" />}
-  else if (pieceCode === "BQ") {return <img src = {BQ}  alt = "Black Queen" />}
-  else if (pieceCode === "BK") {return <img src = {BK}  alt = "Black King" />}
-  else if (pieceCode === "BP") {return <img src = {BP}  alt = "Black Pawn" />}
-  else if (pieceCode === "WR") {return <img src = {WR}  alt = "White Rook" />}
-  else if (pieceCode === "WN") {return <img src = {WN}  alt = "White Knight" />}
-  else if (pieceCode === "WB") {return <img src = {WB}  alt = "White Bishop" />}
-  else if (pieceCode === "WQ") {return <img src = {WQ}  alt = "White Queen" />}
-  else if (pieceCode === "WK") {return <img src = {WK}  alt = "White King" />}
-  else if (pieceCode === "WP") {return <img src = {WP}  alt = "White Pawn" />}
-  else {return ""}
+  const piece = pieceImageList.find(e => e.code === pieceCode)
+  if (!piece) {return ""}
+  return <img src = {piece.image} alt = {piece.name} />
 }
-/////////////// Audio
+///////////////
 function playMove(row, pieceCode) {
   let audio;
   switch(pieceCode[1]){
