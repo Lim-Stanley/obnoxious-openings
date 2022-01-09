@@ -2,10 +2,10 @@ import Button from '@mui/material/Button';
 
 import {Square, isLightSquare, pieceImage} from './square-loading'
 import {audioFileList} from './audio-files'
-import {colOf, rowOf, forwardSlashDiagOf, backSlashDiagOf, makeSquareList} from './direction-functions'
-import {isWhitePiece, PcontrolList, RcontrolList, NcontrolList, BcontrolList, QcontrolList, KcontrolList, controlledBy, makesSelfChecked,
-getMoveLabel} 
-from './update-state-functions'
+import {colOf, rowOf, forwardSlashDiagOf, backSlashDiagOf, makeSquareList, getDirection} from './direction-functions'
+import {isWhitePiece, PcontrolList, PmoveList, RcontrolList, NcontrolList, BcontrolList, QcontrolList, KcontrolList, controlledBy, makesSelfChecked,
+getMoveLabel, isCastling, isIn, isLegalKingMove} 
+from './move-processing'
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -31,6 +31,8 @@ import './index.css';
 //    Get to create a new one, name it, and then play it out, then it saves into the code. I don't know if this is possible at all.
 // Make import files
 // Use datastructure for setting audio = imports
+// move all controlList and 
+// Bug: if you move king in history, and go back to that move, the king will appear (2 kings bug)
 
 // Plays the audio for a given piece move
 function playMove(row, pieceCode) {
@@ -75,13 +77,6 @@ class Board extends React.Component {
   }
 }
 
-function isIn(i, list){
-  for (let n = 0; n < list.length; n++){
-    if (i === list[n])
-      return true;
-  }
-  return false;
-}
 
 class Game extends React.Component {
   /////////////////////////////////////////////////////////////////////////
@@ -367,19 +362,12 @@ class Game extends React.Component {
       this.returnToFirstClick();
       return;
     }
+    const pieceLetter = this.state.movingPiece[1]
     // If not, call the appropriate PmoveProcess, QmoveProcess, etc...
-    if (this.state.movingPiece[1] === "P")
+    if (pieceLetter === "P")
       this.PmoveProcess(i)
-    else if (this.state.movingPiece[1] === "R")
-      this.RmoveProcess(i)
-    else if (this.state.movingPiece[1] === "N")
-      this.NmoveProcess(i)
-    else if (this.state.movingPiece[1] === "B")
-      this.BmoveProcess(i)
-    else if (this.state.movingPiece[1] === "Q")
-      this.QmoveProcess(i)
-    else if (this.state.movingPiece[1] === "K")
-      this.KmoveProcess(i)
+    else if (pieceLetter === "R" || pieceLetter === "N" || pieceLetter === "B" || pieceLetter === "Q" || pieceLetter === "K")
+      this.RNBQKmoveProcess(i, pieceLetter)
     return;
   }
 
@@ -394,21 +382,7 @@ class Game extends React.Component {
   //////////////////////////////////////////////////////////////////////////////////////
   //  Move processing below ////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////
-  getDirection(loc1, loc2){
-    let direction = ""
-    if (rowOf(loc1) === rowOf(loc2))
-      direction = rowOf(loc1)
-    else if (colOf(loc1) === colOf(loc2))
-      direction = colOf(loc1)
-    else if (forwardSlashDiagOf(loc1) === forwardSlashDiagOf(loc2))
-      direction = forwardSlashDiagOf(loc1)
-    else if (backSlashDiagOf(loc1) === backSlashDiagOf(loc2))
-      direction = backSlashDiagOf(loc1) 
-    return direction
-  }
-
-  RmoveProcess(i)
-  {
+  RNBQKmoveProcess(i, pieceLetter){
     const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
@@ -420,401 +394,55 @@ class Game extends React.Component {
       if (this.state.whiteIsMoving){
           // Double checks are accounted for, there must only be one checking piece
           checkingPiece = controlledBy("Black", this.state.whiteKingLocation, squares)[0]
-          direction = this.getDirection(checkingPiece, this.state.whiteKingLocation)
+          direction = getDirection(checkingPiece, this.state.whiteKingLocation)
         }
       else{
         checkingPiece = controlledBy("White", this.state.blackKingLocation, squares)[0]
-        direction = this.getDirection(checkingPiece, this.state.blackKingLocation)
+        direction = getDirection(checkingPiece, this.state.blackKingLocation)
       }
     }
 
-    let movingColor = this.state.whiteIsMoving
-    // movingColor is true if it is white, and false if it is black
-    
-    let moveList = RcontrolList(this.state.pieceLocation, movingColor, squares, false)
-    if (!isIn(i, moveList)) {this.returnToFirstClick(); return}
-
-    // If you can block OR capture the checking piece, make the move
-    if (inCheck.at(-1)){
-      if (this.state.whiteIsMoving && (isIn(i, this.beBlockedList(checkingPiece, this.state.whiteKingLocation, "White", direction)) 
-        || i === checkingPiece)){
-          this.Update(i, "WR")
-          return
-        }
-      else if (!this.state.whiteIsMoving && (isIn(i, this.beBlockedList(checkingPiece, this.state.blackKingLocation, "Black", direction)) 
-        || i === checkingPiece))
-        {
-          this.Update(i, "BR")
-          return
-        }
-      else {this.returnToFirstClick(); return}
+    if (pieceLetter === "K"){
+      const n = isCastling(this.state.whiteIsMoving, squares, i, this.state.whiteKingMoved, this.state.blackKingMoved)
+      if (n) {this.Update(i, n); return;}
     }
 
-    if (this.state.whiteIsMoving)
-      this.Update(i, "WR")
-    else
-      this.Update(i, "BR")
-    this.returnToFirstClick()
-    return;
-  }
-
-  // make a list of all possible rook moves at a given pieceLocation
-
-  RcontrolList(i, movingColor, squares, calculatingWinner)
-  {
     let moveList = []
-    // Going up
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (i - (n*8) >= 64 || i - (n*8) < 0 || 
-        colOf(i - (n*8)) != colOf(i))
-        break;
-      // If empty square
-      if (squares[i - (n*8)] == "empty")
-      {
-        moveList.push(i - (n*8))
-        continue;
-      }
-      // if own piece
-      else if (isWhitePiece(squares[i - (n*8)]) === movingColor){
-        if (calculatingWinner) {moveList.push(i - (n*8))}
-        break;
-      }
-      // if opponent piece
-      else
-      {
-        moveList.push(i - (n*8))
-        break;
-      }
-    }
-
-    // Going down
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (i + (n*8) >= 64 || i + (n*8) < 0 ||
-        colOf(i + (n*8)) != colOf(i))
-        break;
-      // If empty square
-      if (squares[i + (n*8)] == "empty")
-      {
-        moveList.push(i + (n*8))
-        continue;
-      }
-      // if own piece
-      else if (isWhitePiece(squares[i + (n*8)]) === movingColor){
-        if (calculatingWinner) {moveList.push(i + (n*8))}
-        break;
-      }
-      // if opponent piece
-      else
-      {
-        moveList.push(i + (n*8))
-        break;
-      }
-    }
-
-    // Going left
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (i - (n) >= 64 || i - (n) < 0 || 
-        rowOf(i - n) != rowOf(i))
-        break;
-      // If empty square
-      if (squares[i - (n)] == "empty")
-      {
-        moveList.push(i - (n))
-        continue;
-      }
-      // if own piece
-      else if (isWhitePiece(squares[i - (n)]) === movingColor){
-        if (calculatingWinner) {moveList.push(i - (n))}
-        break;
-      }
-      // if black piece
-      else
-      {
-        moveList.push(i - (n))
-        break;
-      }
-    }
-    // Going right
-    for (let n = 1; n < 8; n++)
-    {
-      // If off the board, break
-      if (i + (n) >= 64 || i + (n) < 0 || 
-        rowOf(i + n) != rowOf(i))
-        break;
-      // If empty square
-      if (squares[i + (n)] == "empty")
-      {
-        moveList.push(i + (n))
-        continue;
-      }
-      // if white piece
-      else if (isWhitePiece(squares[i + (n)]) === movingColor){
-        if (calculatingWinner) {moveList.push(i + (n))}
-        break;
-      }
-      // if black piece
-      else
-      {
-        moveList.push(i + (n))
-        break;
-      }
-    }
-    return moveList
-  }
-
-  NmoveProcess(i)
-  {
-    const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
-    const squares = current.squares.slice();
-
-    let direction = ""
-    let checkingPiece = -1
-    if (inCheck.at(-1)){
-      if (this.state.whiteIsMoving){
-          // Double checks are accounted for, there must only be one checking piece
-          checkingPiece = controlledBy("Black", this.state.whiteKingLocation, squares)[0]
-          direction = this.getDirection(checkingPiece, this.state.whiteKingLocation)
-        }
-      else{
-        checkingPiece = controlledBy("White", this.state.blackKingLocation, squares)[0]
-        direction = this.getDirection(checkingPiece, this.state.blackKingLocation)
-      }
-    }
-    // make a list of all possible knight moves at a given pieceLocation
-    let moveList = NcontrolList(this.state.pieceLocation)
-
-    // now, have a moveList
-    console.log(moveList)
+    switch (pieceLetter){
+      case "R":
+        moveList = RcontrolList(this.state.pieceLocation, this.state.whiteIsMoving, squares, false); break;
+      case "N":
+        moveList = NcontrolList(this.state.pieceLocation); break;
+      case "B":
+        moveList = BcontrolList(this.state.pieceLocation, this.state.whiteIsMoving, squares, false); break;
+      case "Q":
+        moveList = QcontrolList(this.state.pieceLocation, this.state.whiteIsMoving, squares, false); break;
+      case "K":
+        moveList = KcontrolList(this.state.pieceLocation)
+    } 
     if (!isIn(i, moveList)) {this.returnToFirstClick(); return}
 
     // If you can block OR capture the checking piece, make the move
     if (inCheck.at(-1)){
-      if (this.state.whiteIsMoving && (isIn(i, this.beBlockedList(checkingPiece, this.state.whiteKingLocation, "White", direction)) 
+      if (pieceLetter === "K" && !isLegalKingMove(this.state.whiteIsMoving, moveList, squares, i)) {this.returnToFirstClick(); return;}
+      else if (this.state.whiteIsMoving && (isIn(i, this.beBlockedList(checkingPiece, this.state.whiteKingLocation, "White", direction)) 
         || i === checkingPiece)){
-          this.Update(i, "WN")
+          this.Update(i, "W" + pieceLetter)
           return
         }
       else if (!this.state.whiteIsMoving && (isIn(i, this.beBlockedList(checkingPiece, this.state.blackKingLocation, "Black", direction)) 
         || i === checkingPiece))
         {
-          this.Update(i, "BN")
+          this.Update(i, "B" + pieceLetter)
           return
         }
       else {this.returnToFirstClick(); return}
     }
 
     if (this.state.whiteIsMoving)
-      this.Update(i, "WN")
+      this.Update(i, "W" + pieceLetter)
     else
-      this.Update(i, "BN")
-    this.returnToFirstClick()
-    return;
-  }
-
-  BmoveProcess(i)
-  {
-    const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
-    const squares = current.squares.slice();
-
-    let direction = ""
-    let checkingPiece = -1
-    if (inCheck.at(-1)){
-      if (this.state.whiteIsMoving){
-          // Double checks are accounted for, there must only be one checking piece
-          checkingPiece = controlledBy("Black", this.state.whiteKingLocation, squares)[0]
-          direction = this.getDirection(checkingPiece, this.state.whiteKingLocation)
-        }
-      else{
-        checkingPiece = controlledBy("White", this.state.blackKingLocation, squares)[0]
-        direction = this.getDirection(checkingPiece, this.state.blackKingLocation)
-      }
-    }
-
-    let movingColor = this.state.whiteIsMoving
-    // movingColor is true if it is white, and false if it is black
-
-    let moveList = BcontrolList(this.state.pieceLocation, movingColor, squares, false)
-    // make a list of all possible bishop moves at a given pieceLocation
-    
-    console.log(moveList)
-    if (!isIn(i, moveList)) {this.returnToFirstClick(); return}
-
-    // If you can block OR capture the checking piece, make the move
-    if (inCheck.at(-1)){
-      if (this.state.whiteIsMoving && (isIn(i, this.beBlockedList(checkingPiece, this.state.whiteKingLocation, "White", direction)) 
-        || i === checkingPiece)){
-          this.Update(i, "WB")
-          return
-        }
-      else if (!this.state.whiteIsMoving && (isIn(i, this.beBlockedList(checkingPiece, this.state.blackKingLocation, "Black", direction)) 
-        || i === checkingPiece))
-        {
-          this.Update(i, "BB")
-          return
-        }
-      else {this.returnToFirstClick(); return}
-    }
-
-    if (this.state.whiteIsMoving)
-      this.Update(i, "WB")
-    else
-      this.Update(i, "BB")
-    this.returnToFirstClick()
-    return;
-  }
-
-  QmoveProcess(i)
-  {
-    const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
-    const squares = current.squares.slice();
-
-    let direction = ""
-    let checkingPiece = -1
-    if (inCheck.at(-1)){
-      if (this.state.whiteIsMoving){
-          // Double checks are accounted for, there must only be one checking piece
-          checkingPiece = controlledBy("Black", this.state.whiteKingLocation, squares)[0]
-          direction = this.getDirection(checkingPiece, this.state.whiteKingLocation)
-        }
-      else{
-        checkingPiece = controlledBy("White", this.state.blackKingLocation, squares)[0]
-        direction = this.getDirection(checkingPiece, this.state.blackKingLocation)
-      }
-    }
-
-    let movingColor = this.state.whiteIsMoving
-    // movingColor is true if it is white, and false if it is black
-
-    let moveList = QcontrolList(this.state.pieceLocation, movingColor, squares, false)
-    // make a list of all possible Queen moves at a given pieceLocation
-    console.log(moveList)
-    
-    if (!isIn(i, moveList)) {this.returnToFirstClick(); return}
-
-    // If you can block OR capture the checking piece, make the move
-    if (inCheck.at(-1)){
-      if (this.state.whiteIsMoving && (isIn(i, this.beBlockedList(checkingPiece, this.state.whiteKingLocation, "White", direction)) 
-        || i === checkingPiece)){
-          this.Update(i, "WQ")
-          return
-        }
-      else if (!this.state.whiteIsMoving && (isIn(i, this.beBlockedList(checkingPiece, this.state.blackKingLocation, "Black", direction)) 
-        || i === checkingPiece))
-        {
-          this.Update(i, "BQ")
-          return
-        }
-      else {this.returnToFirstClick(); return}
-    }
-
-    if (this.state.whiteIsMoving)
-      this.Update(i, "WQ")
-    else
-      this.Update(i, "BQ")
-    this.returnToFirstClick()
-    return;
-  }
-
-  KmoveProcess(i)
-  {
-    const inCheck = this.state.inCheck.slice(0, this.state.stepNumber + 1);
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
-    const squares = current.squares.slice();
-
-    let movingColor = this.state.whiteIsMoving
-    // moving color tells what color king is moving
-
-    // Makes a list of possible moves
-    let moveList = KcontrolList(this.state.pieceLocation)
-    console.log(moveList)
-
-    // check for castling
-    if (movingColor) {
-      if (i === 58){
-        if (squares[57] === "empty" && squares[58] === "empty" && squares[59] === "empty" && squares[56] === "WR" && !this.state.whiteKingMoved &&
-        controlledBy("Black", 57, squares).length === 0 && controlledBy("Black", 58, squares).length === 0)
-        {
-          this.Update(i, "ooo")
-        }
-      }
-      else if (i === 62)
-      {
-        console.log("i'm in the short castling place")
-        if (squares[61] === "empty" && squares[62] === "empty" && squares[63] === "WR" && !this.state.whiteKingMoved &&
-        controlledBy("Black", 61, squares).length === 0 && controlledBy("Black", 62, squares).length === 0)
-        {
-          this.Update(i, "oo")
-        }
-      }
-    }
-    else
-    {
-      if (i === 2) // If queenside castling
-      {
-        if (squares[1] === "empty" && squares[2] === "empty" && squares[3] === "empty" && squares[0] === "BR" && !this.state.blackKingMoved 
-        && controlledBy("White", 2, squares).length === 0 && controlledBy("White", 3, squares).length === 0){
-          this.Update(i, "ooo")
-        }
-      }
-      else if (i === 6)
-      {
-        if (squares[5] === "empty" && squares[6] === "empty" && squares[7] === "BR" && squares[4] == "BK" && !this.state.blackKingMoved &&
-        controlledBy("White", 5, squares).length === 0 && controlledBy("White", 6, squares).length === 0){
-          this.Update(i, "oo")
-        }
-      }
-    }
-
-    if (!isIn(i, moveList)) {this.returnToFirstClick(); return}
-  
-
-    // If you can block OR capture the checking piece, make the move
-    if (inCheck.at(-1)){
-      let ownColor = "White"; let opponentColor = "Black"
-      if (!this.state.whiteIsMoving) {ownColor = "Black"; opponentColor = "White"}
-      for (let i = 0; i < moveList.length;)
-      {
-        if (squares[moveList[i]][0] === ownColor[0] || controlledBy(opponentColor, moveList[i], squares).length !== 0)
-        {
-          moveList.splice(i, 1)
-          continue;
-        }
-        i++
-      }
-      if (!isIn(i, moveList)){
-        this.returnToFirstClick();
-        return;
-      }
-    }
-
-    // Make sure king doesn't suicide
-    if (this.state.whiteIsMoving){
-      if (controlledBy("Black", i, squares).length !== 0){
-        this.returnToFirstClick()
-        return;
-      }
-      this.Update(i, "WK")
-    }
-    else{
-      if (controlledBy("White", i, squares).length !== 0){
-        this.returnToFirstClick()
-        return;
-      }
-      this.Update(i, "BK")
-    }
+      this.Update(i, "B" + pieceLetter)
     this.returnToFirstClick()
     return;
   }
@@ -835,11 +463,11 @@ class Game extends React.Component {
       if (this.state.whiteIsMoving){
           // Double checks are accounted for, there must only be one checking piece
           checkingPiece = controlledBy("Black", this.state.whiteKingLocation, squares)[0]
-          direction = this.getDirection(checkingPiece, this.state.whiteKingLocation)
+          direction = getDirection(checkingPiece, this.state.whiteKingLocation)
         }
       else{
         checkingPiece = controlledBy("White", this.state.blackKingLocation, squares)[0]
-        direction = this.getDirection(checkingPiece, this.state.blackKingLocation)
+        direction = getDirection(checkingPiece, this.state.blackKingLocation)
       }
     }
 
@@ -855,7 +483,7 @@ class Game extends React.Component {
     //   if there is, capture!
     //   if not, return to click one
     let moveList = []
-    moveList = moveList.concat(PcontrolList(this.state.pieceLocation, movingColor), this.PmoveList(this.state.pieceLocation, movingColor))
+    moveList = moveList.concat(PcontrolList(this.state.pieceLocation, movingColor), PmoveList(this.state.pieceLocation, movingColor, squares))
     // Movelist is full of all possible moves
     console.log(moveList)
     // if the click is not a valid move, return!
@@ -973,49 +601,6 @@ class Game extends React.Component {
       this.returnToFirstClick()
     }
     return;
-  }
-
-  PmoveList(i, movingColor)
-  {
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
-    const squares = current.squares.slice();
-
-    let moveList = []
-    if (movingColor){
-      if (i < 56 && i >= 48){
-        for (let n = 1; n < 3; n++){
-          if (squares[i - (n*8)] == "empty")
-            moveList.push(i - (n*8))
-          else
-            break;
-        }
-      }
-      else
-      {
-        if (squares[i - 8] == "empty")
-          moveList.push(i - 8)
-      }
-    }
-    else
-    {
-      if (i < 16 && i >= 8)
-      {
-        for (let n = 1; n < 3; n++)
-        {
-          if (squares[i + (n*8)] == "empty")
-            moveList.push(i + (n*8))
-          else
-            break;
-        }
-      }
-      else
-      {
-        if (squares[i + 8] == "empty")
-          moveList.push(i + 8)
-      }
-    }
-    return moveList
   }
 
   // given a promotion square and color (as a bool), load 4 squares, each with one possible promotion piece: Queen, rook, bishop, knight.
@@ -1140,7 +725,7 @@ class Game extends React.Component {
       // Now, we know squares[n] is of the specified color
       switch(squares[n][1]){
         case 'P':
-          controlList = controlList.concat(this.PmoveList(n, this.state.whiteIsMoving))
+          controlList = controlList.concat(PmoveList(n, this.state.whiteIsMoving, squares))
           break;
         case 'R':
           controlList = controlList.concat(RcontrolList(n, this.state.whiteIsMoving, squares, false))

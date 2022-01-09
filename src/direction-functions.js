@@ -93,3 +93,16 @@ makeSquareList(direction){
     case "": return []
   }
 }
+
+export function getDirection(loc1, loc2){
+  let direction = ""
+  if (rowOf(loc1) === rowOf(loc2))
+    direction = rowOf(loc1)
+  else if (colOf(loc1) === colOf(loc2))
+    direction = colOf(loc1)
+  else if (forwardSlashDiagOf(loc1) === forwardSlashDiagOf(loc2))
+    direction = forwardSlashDiagOf(loc1)
+  else if (backSlashDiagOf(loc1) === backSlashDiagOf(loc2))
+    direction = backSlashDiagOf(loc1) 
+  return direction
+}

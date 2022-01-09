@@ -1,5 +1,13 @@
 import {colOf, rowOf, forwardSlashDiagOf, backSlashDiagOf} from './direction-functions'
 
+export function isIn(i, list){
+  for (let n = 0; n < list.length; n++){
+    if (i === list[n])
+      return true;
+  }
+  return false;
+}
+
 export function isWhitePiece(pieceCode) {
 if (pieceCode === "WR" || 
 pieceCode === "WN" ||
@@ -17,6 +25,40 @@ if (movingColor)
 else
     return [i+7, i+9]
 }
+
+export function PmoveList(i, movingColor, squares) {
+  let moveList = []
+  if (movingColor){
+    if (i < 56 && i >= 48){
+      for (let n = 1; n < 3; n++){
+        if (squares[i - (n*8)] == "empty")
+          moveList.push(i - (n*8))
+        else
+          break;
+      }
+    }
+    else {
+      if (squares[i - 8] == "empty")
+        moveList.push(i - 8)
+    }
+  }
+  else {
+    if (i < 16 && i >= 8) {
+      for (let n = 1; n < 3; n++) {
+        if (squares[i + (n*8)] == "empty")
+          moveList.push(i + (n*8))
+        else
+          break;
+      }
+    }
+    else {
+      if (squares[i + 8] == "empty")
+        moveList.push(i + 8)
+    }
+  }
+  return moveList
+}
+
 
 // make a list of all possible rook moves at a given pieceLocation
 export function RcontrolList(i, movingColor, squares, calculatingWinner) {
@@ -378,4 +420,61 @@ export function getMoveLabel(pieceCode, i, pieceLocation, promotionPiece, whiteI
     else
       moveLabel = pieceCode[1] + colOf(i) + rowOf(i)
     return moveLabel
+}
+
+// Check if castling
+export function isCastling(colorBool, squares, i, whiteKingMoved, blackKingMoved){
+  if (colorBool) {
+    if (i === 58){
+      if (squares[57] === "empty" && squares[58] === "empty" && squares[59] === "empty" && squares[56] === "WR" && !whiteKingMoved &&
+      controlledBy("Black", 57, squares).length === 0 && controlledBy("Black", 58, squares).length === 0)
+      {
+        return "ooo"
+      }
+    }
+    else if (i === 62)
+    {
+      console.log("i'm in the short castling place")
+      if (squares[61] === "empty" && squares[62] === "empty" && squares[63] === "WR" && !whiteKingMoved &&
+      controlledBy("Black", 61, squares).length === 0 && controlledBy("Black", 62, squares).length === 0)
+      {
+        return "oo"
+      }
+    }
+  }
+  else {
+    if (i === 2) // If queenside castling
+    {
+      if (squares[1] === "empty" && squares[2] === "empty" && squares[3] === "empty" && squares[0] === "BR" && !blackKingMoved 
+      && controlledBy("White", 2, squares).length === 0 && controlledBy("White", 3, squares).length === 0){
+        return "ooo"
+      }
+    }
+    else if (i === 6)
+    {
+      if (squares[5] === "empty" && squares[6] === "empty" && squares[7] === "BR" && squares[4] == "BK" && !blackKingMoved &&
+      controlledBy("White", 5, squares).length === 0 && controlledBy("White", 6, squares).length === 0){
+        return "oo"
+      }
+    }
+  }
+  return false  
+}
+
+export function isLegalKingMove(colorBool, moveList, squares, i){
+    let ownColor = "White"; let opponentColor = "Black"
+    if (!colorBool) {ownColor = "Black"; opponentColor = "White"}
+    for (let i = 0; i < moveList.length;)
+    {
+      if (squares[moveList[i]][0] === ownColor[0] || controlledBy(opponentColor, moveList[i], squares).length !== 0)
+      {
+        moveList.splice(i, 1)
+        continue;
+      }
+      i++
+    }
+    if (!isIn(i, moveList)){
+      return false;
+    }
+    return true;
 }
