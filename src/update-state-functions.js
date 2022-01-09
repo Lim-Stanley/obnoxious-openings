@@ -330,3 +330,52 @@ for (let n = 0; n < 64; n++){
 }
 return controllingList;
 }
+
+export function makesSelfChecked(colorBool, pieceCode, i, squares, whiteKingLocation, blackKingLocation){
+    if(colorBool){
+      if (pieceCode === "WK"){
+        if (controlledBy("Black", i, squares).length !== 0){
+          // dont allow them to suicide their own king
+          return true;
+        }
+      }
+      else if (controlledBy("Black", whiteKingLocation, squares).length !== 0){
+        return true;
+      }
+    }
+    else{
+      if (pieceCode === "BK"){
+        if (controlledBy("White", i, squares).length !== 0){
+          // dont allow them to suicide their own king
+          return true;
+        }
+      }
+      else if (controlledBy("White", blackKingLocation, squares).length !== 0){
+        return true;
+      }
+    }
+    return false;
+}
+
+export function getMoveLabel(pieceCode, i, pieceLocation, promotionPiece){
+    let moveLabel = ""
+    if (pieceCode == "WP" || pieceCode == "BP" || pieceCode == "WPe" || pieceCode == "BPe"){
+      moveLabel = colOf(i) + rowOf(i)
+      // If it's a capture, add an x
+      if (colOf(i) !== colOf(pieceLocation))
+        moveLabel = colOf(pieceLocation) + "x" + moveLabel
+      // if it's a promotion, do the equals thing
+      if ((i <8 && i >=0) || (i < 64 && i >= 56)){
+        moveLabel = moveLabel + "=" + this.state.promotionPiece
+        if (this.state.whiteIsMoving)
+          pieceCode = "W" + this.state.promotionPiece
+        else
+          pieceCode = "B" + this.state.promotionPiece
+      }
+    }
+    else if (squares[i] != "empty")
+      moveLabel = pieceCode[1] + "x" + colOf(i) + rowOf(i)
+    else
+      moveLabel = pieceCode[1] + colOf(i) + rowOf(i)
+    return moveLabel
+}

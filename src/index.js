@@ -3,7 +3,7 @@ import Button from '@mui/material/Button';
 import {Square, isLightSquare, pieceImage} from './square-loading'
 import {audioFileList} from './audio-files'
 import {colOf, rowOf, forwardSlashDiagOf, backSlashDiagOf, makeSquareList} from './direction-functions'
-import {isWhitePiece, PcontrolList, RcontrolList, NcontrolList, BcontrolList, QcontrolList, KcontrolList, controlledBy} 
+import {isWhitePiece, PcontrolList, RcontrolList, NcontrolList, BcontrolList, QcontrolList, KcontrolList, controlledBy, makesSelfChecked} 
 from './update-state-functions'
 
 import React from 'react';
@@ -176,32 +176,11 @@ class Game extends React.Component {
     squares[i] = pieceCode
     squares[this.state.pieceLocation] = "empty"
     // If this move makes yourself checked, don't do it
-    if(this.state.whiteIsMoving){
-      if (pieceCode === "WK"){
-        if (controlledBy("Black", i, squares).length !== 0){
-          // dont allow them to suicide their own king
-          this.returnToFirstClick()
-          return;
-        }
-      }
-      else if (controlledBy("Black", this.state.whiteKingLocation, squares).length !== 0){
-        this.returnToFirstClick()
-        return;
-      }
+    if (makesSelfChecked(this.state.whiteIsMoving, pieceCode, i, squares, this.state.whiteKingLocation, this.state.blackKingLocation)) {
+      this.returnToFirstClick()
+      return
     }
-    else{
-      if (pieceCode === "BK"){
-        if (controlledBy("White", i, squares).length !== 0){
-          // dont allow them to suicide their own king
-          this.returnToFirstClick()
-          return;
-        }
-      }
-      else if (controlledBy("White", this.state.blackKingLocation, squares).length !== 0){
-        this.returnToFirstClick()
-        return;
-      }
-    }
+    // reset squares to how they were before
     squares[i] = tempDelete
     squares[this.state.pieceLocation] = pieceCode
     if (pieceCode === "oo" || pieceCode === "ooo"){
@@ -211,28 +190,9 @@ class Game extends React.Component {
         squares[this.state.pieceLocation] = "BK"
     }
 
-    console.log(rowOf(i))
     playMove(rowOf(i), pieceCode)
-    let moveLabel = ""
     // Make moveHistory label (e4, Bh5, etc..)
-    if (pieceCode == "WP" || pieceCode == "BP" || pieceCode == "WPe" || pieceCode == "BPe"){
-      moveLabel = colOf(i) + rowOf(i)
-      // If it's a capture, add an x
-      if (colOf(i) !== colOf(this.state.pieceLocation))
-        moveLabel = colOf(this.state.pieceLocation) + "x" + moveLabel
-      // if it's a promotion, do the equals thing
-      if ((i <8 && i >=0) || (i < 64 && i >= 56)){
-        moveLabel = moveLabel + "=" + this.state.promotionPiece
-        if (this.state.whiteIsMoving)
-          pieceCode = "W" + this.state.promotionPiece
-        else
-          pieceCode = "B" + this.state.promotionPiece
-      }
-    }
-    else if (squares[i] != "empty")
-      moveLabel = pieceCode[1] + "x" + colOf(i) + rowOf(i)
-    else
-      moveLabel = pieceCode[1] + colOf(i) + rowOf(i)
+    let moveLabel = getMoveLabel(pieceCode, this.state.pieceLocation, this.state.promotionPiece, this.state.whiteIsMoving)
 
     // Handling castling
     if (pieceCode === "oo"){
@@ -325,7 +285,6 @@ class Game extends React.Component {
       pieceLocation: null,
       promotionPiece: null,
     });
-
     return;
   }
   
@@ -399,13 +358,11 @@ class Game extends React.Component {
 
     // First, check if it is on the same color piece. If so, return, because 
     // pieces cannot move on their own pieces
-    if (isWhitePiece(squares[i]) && this.state.whiteIsMoving)
-    {
+    if (isWhitePiece(squares[i]) && this.state.whiteIsMoving) {
       this.returnToFirstClick();
       return;
     }
-    else if (!isWhitePiece(squares[i]) && !this.state.whiteIsMoving && squares[i] != "empty")
-    {
+    else if (!isWhitePiece(squares[i]) && !this.state.whiteIsMoving && squares[i] != "empty") {
       this.returnToFirstClick();
       return;
     }
