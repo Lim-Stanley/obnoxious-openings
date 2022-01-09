@@ -3,7 +3,8 @@ import Button from '@mui/material/Button';
 import {Square, isLightSquare, pieceImage} from './square-loading'
 import {audioFileList} from './audio-files'
 import {colOf, rowOf, forwardSlashDiagOf, backSlashDiagOf, makeSquareList} from './direction-functions'
-import {isWhitePiece, PcontrolList, RcontrolList, NcontrolList, BcontrolList, QcontrolList, KcontrolList, controlledBy, makesSelfChecked} 
+import {isWhitePiece, PcontrolList, RcontrolList, NcontrolList, BcontrolList, QcontrolList, KcontrolList, controlledBy, makesSelfChecked,
+getMoveLabel} 
 from './update-state-functions'
 
 import React from 'react';
@@ -192,7 +193,7 @@ class Game extends React.Component {
 
     playMove(rowOf(i), pieceCode)
     // Make moveHistory label (e4, Bh5, etc..)
-    let moveLabel = getMoveLabel(pieceCode, this.state.pieceLocation, this.state.promotionPiece, this.state.whiteIsMoving)
+    let moveLabel = getMoveLabel(pieceCode, i, this.state.pieceLocation, this.state.promotionPiece, this.state.whiteIsMoving, squares)
 
     // Handling castling
     if (pieceCode === "oo"){

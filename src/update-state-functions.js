@@ -357,7 +357,7 @@ export function makesSelfChecked(colorBool, pieceCode, i, squares, whiteKingLoca
     return false;
 }
 
-export function getMoveLabel(pieceCode, i, pieceLocation, promotionPiece){
+export function getMoveLabel(pieceCode, i, pieceLocation, promotionPiece, whiteIsMoving, squares){
     let moveLabel = ""
     if (pieceCode == "WP" || pieceCode == "BP" || pieceCode == "WPe" || pieceCode == "BPe"){
       moveLabel = colOf(i) + rowOf(i)
@@ -366,11 +366,11 @@ export function getMoveLabel(pieceCode, i, pieceLocation, promotionPiece){
         moveLabel = colOf(pieceLocation) + "x" + moveLabel
       // if it's a promotion, do the equals thing
       if ((i <8 && i >=0) || (i < 64 && i >= 56)){
-        moveLabel = moveLabel + "=" + this.state.promotionPiece
-        if (this.state.whiteIsMoving)
-          pieceCode = "W" + this.state.promotionPiece
+        moveLabel = moveLabel + "=" + promotionPiece
+        if (whiteIsMoving)
+          pieceCode = "W" + promotionPiece
         else
-          pieceCode = "B" + this.state.promotionPiece
+          pieceCode = "B" + promotionPiece
       }
     }
     else if (squares[i] != "empty")
