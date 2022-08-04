@@ -4,8 +4,8 @@ import {Square, isLightSquare, pieceImage} from './square-loading'
 import {audioFileList} from './audio-files'
 import {colOf, rowOf, forwardSlashDiagOf, backSlashDiagOf, makeSquareList, getDirection} from './direction-functions'
 import {isWhitePiece, PcontrolList, PmoveList, RcontrolList, NcontrolList, BcontrolList, QcontrolList, KcontrolList, controlledBy, makesSelfChecked,
-getMoveLabel, isCastling, isIn, isLegalKingMove} 
-from './move-processing'
+getMoveLabel, isCastling, isIn, isLegalKingMove} from './move-processing'
+import {openings} from './opening_proc/openings.js'
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -14,25 +14,6 @@ import './index.css';
 // TO ADD A NEW OPENING:
 //  - Update the list openingList
 //  - Update the function setMode
-
-/////////////////////////////////////////////////////////////
-//////////       TO DO LIST   ///////////////////////////////
-/////////////////////////////////////////////////////////////
-// Drag and drop
-// castle through history
-// Get special sound for promotion
-// Sound when you try to move when checked
-// Make search bar designed like chess.com search bar
-// Make a random opening button
-// Play a sound when an opening is played incorrectly
-// Play a sound when an opening is played 100% accurately
-// Possibly find a way to integrate stockfish
-// Code a "make new opening" function?
-//    Get to create a new one, name it, and then play it out, then it saves into the code. I don't know if this is possible at all.
-// Make import files
-// Use datastructure for setting audio = imports
-// move all controlList and 
-// Bug: if you move king in history, and go back to that move, the king will appear (2 kings bug)
 
 // Plays the audio for a given piece move
 function playMove(row, pieceCode) {
@@ -870,24 +851,7 @@ setMode(mode){
   if (openingName + mode === this.state.openingName) {return;}
   this.resetBoard();
   this.setState({freePlayMode: false})
-  let moveList = [];
-  switch(mode){
-    case "Advanced Caro-Kann": {moveList = ["e4", "c6", "d4", "d5", "e5", "Bf5", ]; break;}
-    case "Caro-Kann": {moveList = ["e4", "c6", "d4", "d5"]; break;}
-    case "English": {moveList = ["c4", "e5", "Nc3"]; break;}
-    case "French Defense": {moveList = ["e4", "e6", "d4", "e5", "Nc3"]; break;}
-    case "Italian Game: Giuoco Pianissimo": {moveList = ["e4", "e5", "Nf3", "Nc6", "Bc4", "Bc5", "d3"]; break;}
-    case "Italian Game: Giuoco Piano": {moveList = ["e4", "e5", "Nf3", "Nc6", "Bc4", "Bc5"]; break;}
-    case "King's Gambit": {moveList = ["e4", "e5", "f4"]; break;}
-    case "Petrov's Defense": {moveList = ["e4", "e5", "Nf3", "Nf6", "Nxe5", "d6", "Nf3", "Nxe4", "d4"];  break;}
-    case "Queen's Gambit": {moveList = ["d4", "d5", "c4"]; break;}
-    case "Ruy Lopez": {moveList = ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "Nf6", "O-O"]; break;}
-    case "Scotch": {moveList = ["e4", "e5", "Nf3", "Nc6", "d4"]; break;}
-    case "Sicilian Defense": {moveList = ["e4", "c5", "Nf3", "Nc6"]; break;}
-    case "Sicilian Defense: Alapin Variation": {moveList = ["e4", "c5", "c3", "Nc6", "d4"]; break;}
-    case "Stafford Gambit": {moveList = ["e4", "e5", "Nf3", "Nf6", "Nxe5", "Nc6", "Nxc6", "dxc6"]; break;}
-    case "The London System": {moveList = ["d4", "d5", "Bf4", "Nf6", "e3"]; break;}
-  }
+  let moveList = openings[mode];
   this.setState({openingMoveList: moveList})
   this.setState({openingName: openingName + mode})
   return;
@@ -948,11 +912,7 @@ render() {
 
   // Creates opening interface
   let search = [<input type="text" id="myInput" placeholder="Search for openings.."></input>]
-  const openingList = ["Advanced Caro-Kann", "Caro-Kann", "English", "French Defense", "Italian Game: Giuoco Piano", 
-  "Italian Game: Giuoco Pianissimo", "King's Gambit", 
-  "Petrov's Defense", "Queen's Gambit", "Ruy Lopez", "Scotch", 
-  "Sicilian Defense", "Sicilian Defense: Alapin Variation",
-    "Stafford Gambit", "The London System"]
+  const openingList = Object.keys(openings)
   let openingButtonList = [];
   for (let i = 0; i < openingList.length; i++){
     openingButtonList.push(<li><button className = "moves" onClick ={() => this.setMode(openingList[i])}>{openingList[i]}</button></li>)

@@ -24,6 +24,7 @@ body {
     border-width: thick;
     border-style: ridge;
     margin-bottom: 10px;
+    width: 150px;
   }
 
   .mode-status{
