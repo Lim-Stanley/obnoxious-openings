@@ -911,13 +911,11 @@ render() {
     Flip Board</button>
 
   // Creates opening interface
-  let search = [<input type="text" id="myInput" placeholder="Search for openings.."></input>]
   const openingList = Object.keys(openings)
   let openingButtonList = [];
   for (let i = 0; i < openingList.length; i++){
     openingButtonList.push(<li><button className = "moves" onClick ={() => this.setMode(openingList[i])}>{openingList[i]}</button></li>)
   }
-  search.push(<ul id="myUL">{openingButtonList}</ul>)
 
   // Does opening checking
   if (this.state.openingMoveList.length !== 0){
@@ -934,7 +932,8 @@ render() {
       <div className = "opening-interface">
         <div className = "mode-status">{this.state.openingName}</div>
         <div><button className = "moves" onClick={() => this.setMode("Free play")}>Return to free play</button></div>
-        {search}
+        <input type="text" id="myInput" placeholder="Search for openings.."></input>
+        <div className = "opening-list"><ul id="myUL">{openingButtonList}</ul></div>
       </div>
       <div className="game-board">
         <Board squares={current.squares}
@@ -947,7 +946,7 @@ render() {
         <div className = "status">{status}</div>
         <div id = "promotion"></div>
         <div>{flipBoard}</div>
-        <div>{moves}</div>
+        <div className= "move-list">{moves}</div>
       </div> 
     </div>
   );

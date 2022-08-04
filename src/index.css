@@ -4,126 +4,156 @@ body {
     background-color: #312e2b;
   }
   
-  ol, ul {
-    padding-left: 30px;
-  }
-  
-  .board-row:after {
-    clear: both;
-    content: "";
-    display: table;
-  }
-  
-  /* increase both status and mode-status font-sizes when not debugging */
-  .status {
-    font-size: 14px;
-    background-color: #272522;
-    color: #a7a79f;
-    text-align: center;
-    border: #767676;
-    border-width: thick;
-    border-style: ridge;
-    margin-bottom: 10px;
-    width: 150px;
-  }
+ol, ul {
+  padding-left: 30px;
+}
 
-  .mode-status{
-    font-size: 14px;
-    background-color: #272522;
-    color: #a7a79f;
-    text-align: center;
-    border: #767676;
-    border-width: thick;
-    border-style: ridge;
-    width: 200px;
-    margin-bottom: 10px;
-  }
+li {
+  padding: 0;
+  list-style-type: none;
+}
 
-  .Square{
-    cursor: move;
+.board-row:after {
+  clear: both;
+  content: "";
+  display: table;
+}
 
-  }
-  
-  .square:focus {
-    outline: none;
-  }
-  
-  .kbd-navigation .square:focus {
-    background: rgb(255, 255, 255);
-  }
-  
-  .game {
-    display: flex;
-    flex-direction: row;
-  }
-  
-  .game-info {
-    margin-left: 20px;
-  }
+/* increase both status and mode-status font-sizes when not debugging */
+.status {
+  font-size: 14px;
+  background-color: #272522;
+  color: #a7a79f;
+  text-align: center;
+  border: #767676;
+  border-width: thick;
+  border-style: ridge;
+  margin-bottom: 10px;
+  width: 150px;
+}
 
-  .moves {
-    background-color: #272522;
-    color: #a7a79f;
-  }
+.mode-status{
+  font-size: 14px;
+  background-color: #272522;
+  color: #a7a79f;
+  text-align: center;
+  border: #767676;
+  border-width: thick;
+  border-style: ridge;
+  width: 200px;
+  margin-bottom: 10px;
+}
 
-  .opening-interface{
-    margin-right: 20px;
-  }
+.Square{
+  cursor: move;
+}
 
+.square:focus {
+  outline: none;
+}
 
-  #myInput {
-    font: "Century Gothic", Futura, sans-serif;
-    font-size: 14px;
-    color: #838281;
-    background-color: #3d3b39;
-    border-radius: 5px;
-    width: 200px;
-    height: 20px;
-    text-align: left;
-    margin-top: 5px;
-    margin-bottom: 5px;
-  }
+.kbd-navigation .square:focus {
+  background: rgb(255, 255, 255);
+}
 
-  #myUL {
-    /* Remove default list styling */
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  #myUL li a {
-    border: 1px solid #ddd; /* Add a border to all links */
-    margin-top: -1px; /* Prevent double borders */
-    background-color: #f6f6f6; /* Grey background color */
-    padding: 12px; /* Add some padding */
-    text-decoration: none; /* Remove default text underline */
-    font-size: 18px; /* Increase the font-size */
-    color: black; /* Add a black text color */
-    display: block; /* Make it into a block element to fill the whole list */
-  }
-  
-  #myUL li a:hover:not(.header) {
-    background-color: #eee; /* Add a hover effect to all links, except for headers */
-  }
+.game {
+  display: flex;
+  flex-direction: row;
+}
 
-  #promotion{
-    padding-bottom: 10px;
-  }
+.game-info {
+  margin-left: 20px;
+}
 
-  #mydiv {
-    position: absolute;
-    z-index: 9;
-    background-color: #f1f1f1;
-    text-align: center;
-    border: 1px solid #d3d3d3;
-  }
-  
-  #mydivheader {
-    padding: 10px;
-    cursor: move;
-    z-index: 10;
-    width: 50px;
-    height: 50px;
-    background-color: #2196F3;
-    color: #fff;
-  }
+.moves {
+  background-color: #272522;
+  color: #a7a79f;
+}
+
+.opening-interface{
+  margin-right: 20px;
+}
+
+::-webkit-scrollbar {
+  background-color: #272522;
+  border-bottom: 0;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #767676;
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-corner {
+  color: #a7a79f;
+}
+
+.move-list { 
+  overflow: auto;
+  height: 560px;
+}
+
+.opening-list {
+  overflow: auto;
+  overflow-x: hidden; 
+  height: 540px;
+  border-bottom: 0;
+  width: 300px;
+}
+
+#myInput {
+  font: "Century Gothic", Futura, sans-serif;
+  font-size: 14px;
+  color: #838281;
+  background-color: #3d3b39;
+  border-radius: 5px;
+  width: 200px;
+  height: 20px;
+  text-align: left;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+#myUL {
+  /* Remove default list styling */
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+#myUL li a {
+  border: 1px solid #ddd; /* Add a border to all links */
+  margin-top: -1px; /* Prevent double borders */
+  background-color: #f6f6f6; /* Grey background color */
+  padding: 12px; /* Add some padding */
+  text-decoration: none; /* Remove default text underline */
+  font-size: 18px; /* Increase the font-size */
+  color: black; /* Add a black text color */
+  display: block; /* Make it into a block element to fill the whole list */
+}
+
+#myUL li a:hover:not(.header) {
+  background-color: #eee; /* Add a hover effect to all links, except for headers */
+}
+
+#promotion{
+  padding-bottom: 10px;
+}
+
+#mydiv {
+  position: absolute;
+  z-index: 9;
+  background-color: #f1f1f1;
+  text-align: center;
+  border: 1px solid #d3d3d3;
+}
+
+#mydivheader {
+  padding: 10px;
+  cursor: move;
+  z-index: 10;
+  width: 50px;
+  height: 50px;
+  background-color: #2196F3;
+  color: #fff;
+}
