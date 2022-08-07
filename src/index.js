@@ -206,6 +206,9 @@ class Game extends React.Component {
       if (this.state.whiteIsMoving) {squares[i] = "WP"}
       else {squares[i] = "BP"}
     }
+    else if (this.state.promotionPiece != null){
+      squares[i] = pieceCode[0] + this.state.promotionPiece
+    }
     else
       squares[i] = pieceCode;
     squares[this.state.pieceLocation] = "empty";
