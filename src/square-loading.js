@@ -32,5 +32,5 @@ export function isLightSquare(i){
 export function pieceImage(pieceCode){
   const piece = pieceImageList.find(e => e.code === pieceCode)
   if (!piece) {return ""}
-  return <img src = {piece.image} alt = {piece.name} />
+  return <img draggable={false} src = {piece.image} alt = {piece.name} />
 }
