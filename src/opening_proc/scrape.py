@@ -9,7 +9,17 @@ def removeMoveNumbers(s):
     for index in indices:
         del s[index]
         del s[index - 1]
-    return ''.join(s)
+        if index - 2 > 0 and s[index - 2].isnumeric():
+            del s[index - 2]
+    s = ''.join(s).split()
+    for i, move in enumerate(s):
+        if i == len(s) - 1:
+            break
+        if len(move) == 4 and not (move[1] == 'x' or move[1] == '-'):
+            s[i] = move[0] + move[2:]
+        if move[-1] == '+':
+            s[i] = move[:-1]
+    return s
 
 openings = {}
 with open('openings.html', 'r') as html_text:
@@ -19,8 +29,7 @@ with open('openings.html', 'r') as html_text:
         columns = tag.findAll('div', class_ = 'yui-dt-liner')
         name = columns[0].text.strip()
         moves = columns[-1].text.strip()
-        moves = removeMoveNumbers(moves).split()
-        openings[name] = moves
+        openings[name] = removeMoveNumbers(moves)
 
 sys.stdout = open('openings.js', 'w')
 json_d = json.dumps(openings)
