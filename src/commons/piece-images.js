@@ -1,16 +1,16 @@
-import BR from './pieces/Black Rook.png'
-import BN from './pieces/Black Knight.png'
-import BB from './pieces/Black Bishop.png'
-import BQ from './pieces/Black Queen.png'
-import BK from './pieces/Black King.png'
-import BP from './pieces/Black Pawn.png'
+import BR from '../images/Black Rook.png'
+import BN from '../images/Black Knight.png'
+import BB from '../images/Black Bishop.png'
+import BQ from '../images/Black Queen.png'
+import BK from '../images/Black King.png'
+import BP from '../images/Black Pawn.png'
 
-import WR from './pieces/White Rook.png'
-import WN from './pieces/White Knight.png'
-import WB from './pieces/White Bishop.png'
-import WQ from './pieces/White Queen.png'
-import WK from './pieces/White King.png'
-import WP from './pieces/White Pawn.png'
+import WR from '../images/White Rook.png'
+import WN from '../images/White Knight.png'
+import WB from '../images/White Bishop.png'
+import WQ from '../images/White Queen.png'
+import WK from '../images/White King.png'
+import WP from '../images/White Pawn.png'
 
 export const pieceImageList = [
     {"code": "WP", "image": WP, "name": "White Pawn"},

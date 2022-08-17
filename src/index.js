@@ -1,10 +1,10 @@
 import Button from '@mui/material/Button';
 
-import {Square, isLightSquare, pieceImage} from './square-loading'
-import {audioFileList} from './audio-files'
-import {colOf, rowOf, forwardSlashDiagOf, backSlashDiagOf, makeSquareList, getDirection} from './direction-functions'
+import {Square, isLightSquare, pieceImage} from './commons/square-loading'
+import {audioFileList} from './commons/audio-files'
+import {colOf, rowOf, forwardSlashDiagOf, backSlashDiagOf, makeSquareList, getDirection} from './commons/direction-functions'
 import {isWhitePiece, PcontrolList, PmoveList, RcontrolList, NcontrolList, BcontrolList, QcontrolList, KcontrolList, controlledBy, makesSelfChecked,
-getMoveLabel, isCastling, isIn, isLegalKingMove} from './move-processing'
+getMoveLabel, isCastling, isIn, isLegalKingMove} from './commons/move-processing'
 import {openings} from './opening_proc/openings.js'
 
 import React from 'react';
